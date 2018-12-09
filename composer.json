@@ -1,0 +1,32 @@
+{
+    "name": "statikbe/laravel-google-authenticate",
+    "description": "Google Authentication in Laravel",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kristof Serré",
+            "email": "kristof@statik.be",
+            "homepage": "https://www.statik.be"
+        }
+    ],
+    "homepage": "https://github.com/statikbe/laravel-google-authenticate",
+    "keywords": ["Laravel", "googleAuthenticate"],
+    "require": {
+        "illuminate/support": "~5",
+        "google/apiclient": "^2.2",
+        "laravel/socialite": "^3.0",
+        "spatie/laravel-permission": "^2.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Statikbe\\GoogleAuthenticate\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider"
+            ]
+        }
+    }
+}
