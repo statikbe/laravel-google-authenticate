@@ -18,7 +18,6 @@ class addgoogleprovidertousertable extends Migration
             $table->string('password', 60)->nullable()->change();
             $table->string('provider');
             $table->string('provider_id');
-            $table->rememberToken();
         });
     }
 
