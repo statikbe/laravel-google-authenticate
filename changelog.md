@@ -2,6 +2,10 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 1.0.7
+## Added
+- Added the values that need to be in the services.php class
+- Changed Controller route namespacing
 ## Version 1.0.6
 ## Removed
 - Removed column from migration, should not have been there in the first place

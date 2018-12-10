@@ -38,6 +38,17 @@ GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
 GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET"
 CALLBACK_URL_GOOGLE="YOUR_GOOGLE_CALLBACK_URL"
 ```
+
+The last step is to add the following lines in your ```services.php```
+```php
+‘google’ => [
+       ‘client_id’ => env(‘GOOGLE_CLIENT_ID’),
+       ‘client_secret’ => env(‘GOOGLE_CLIENT_SECRET’),
+       ‘redirect’ => env(‘CALLBACK_URL_GOOGLE’),
+   ],
+```
+
+
 Info on how to create a Google Auth Client id and secret can be
 found [on their documentation page](https://developers.google.com/identity/protocols/OAuth2).
 

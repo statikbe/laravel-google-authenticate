@@ -2,7 +2,7 @@
 
 namespace Statikbe\GoogleAuthenticate;
 
-use App\Http\Controllers\Controller;
+
 use App\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Auth;
