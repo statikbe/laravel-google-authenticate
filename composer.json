@@ -15,7 +15,8 @@
         "illuminate/support": "~5",
         "google/apiclient": "^2.2",
         "laravel/socialite": "^3.0",
-        "spatie/laravel-permission": "^2.9"
+        "spatie/laravel-permission": "^2.9",
+        "doctrine/dbal": "^2.8"
     },
     "autoload": {
         "psr-4": {
