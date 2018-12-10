@@ -14,16 +14,21 @@ $ composer require statikbe/laravel-google-authenticate
 
 ## Usage
 
-The service provider will be added automatically.
-You only need to add the Trait onto your User.
+The package will automatically register itself.
 
-Add the ``` use HasGoogleAuth``` in the ```User.php``` class
-This will provide the necessary fillable options to your User.
+You can publish the migration with:
+```shell
+php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServiceProvider" --tag="migrations"
+
+```
 
 To add the needed columns in your database run:
- ``` php
+ ``` shell
 php artisan migrate
 ``` 
+
+Add the ``` use HasGoogleAuth``` trait in your ```User.php``` class.
+This will provide the necessary fillable options to your User.
 
 in your .env file you should include the following keys:
 ``` php
@@ -33,10 +38,8 @@ GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
 GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET"
 CALLBACK_URL_GOOGLE="YOUR_GOOGLE_CALLBACK_URL"
 ```
-
 Info on how to create a Google Auth Client id and secret can be
 found [on their documentation page](https://developers.google.com/identity/protocols/OAuth2).
-
 
 ## Security
 
