@@ -14,13 +14,11 @@ class addgoogleprovidertousertable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('email')->nullable();
-            $table->string('password', 60)->nullable();
+            $table->string('email')->nullable()->change();
+            $table->string('password', 60)->nullable()->change();
             $table->string('provider');
             $table->string('provider_id');
             $table->rememberToken();
-            $table->timestamps();
-            //
         });
     }
 
