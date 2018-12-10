@@ -18,7 +18,7 @@ The package will automatically register itself.
 
 You can publish the migration with:
 ```shell
-php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migrations"
 
 ```
 
