@@ -2,6 +2,9 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 1.0.6
+## Removed
+- Removed column from migration, should not have been there in the first place
 ## Version 1.0.5
 ## Changed
 - Added dependency for doctrine/dbal
