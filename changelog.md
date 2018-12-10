@@ -2,6 +2,10 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 1.0.4
+## Changed
+- Changed the name of the migration file
+- Typo in readme
 ## Version 1.0.3
 ### Changed
 - Made some fixes to the readme
