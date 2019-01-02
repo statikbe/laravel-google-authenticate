@@ -5,6 +5,7 @@ namespace Statikbe\GoogleAuthenticate;
 
 use App\User;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Spatie\Permission\Models\Role;

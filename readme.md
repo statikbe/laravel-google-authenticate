@@ -36,7 +36,7 @@ AUTH_ROLE_ADMIN="Admin" //This can be any role you like
 AUTH_ROLE_DOMAIN="domain.com"
 GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
 GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET"
-CALLBACK_URL_GOOGLE="YOUR_GOOGLE_CALLBACK_URL"
+CALLBACK_URL_GOOGLE="https://www.domain.com/login/google/callback"
 ```
 
 The last step is to add the following lines in your ```services.php```
