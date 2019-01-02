@@ -2,6 +2,9 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 1.0.8
+## Added
+- Correct namespace class for Controller extend
 ## Version 1.0.7
 ## Added
 - Added the values that need to be in the services.php class
