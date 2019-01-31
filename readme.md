@@ -34,6 +34,7 @@ in your .env file you should include the following keys:
 ``` php
 AUTH_ROLE_ADMIN="Admin" //This can be any role you like
 AUTH_ROLE_DOMAIN="domain.com"
+AUGHT_REDIRECT_URL="/admin"
 GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
 GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET"
 CALLBACK_URL_GOOGLE="https://www.domain.com/login/google/callback"

@@ -41,6 +41,7 @@ class GoogleAuthenticateController extends Controller
     {
         //$this->middleware('auth');
         $this->middleware('guest')->except('logout');
+        $this->redirectTo = env('AUTH_REDIRECT_URL');
     }
     
     public function getLogout()
