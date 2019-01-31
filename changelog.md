@@ -2,6 +2,9 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 1.0.9
+## Added
+- Added a way to change the redirect url after login
 ## Version 1.0.8
 ## Added
 - Correct namespace class for Controller extend
