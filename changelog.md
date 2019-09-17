@@ -1,7 +1,9 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
-
+## Version 2.0.1
+### Changed
+- Updated composer package illuminate/support for Laravel 6
 ## Version 2.0.0
 ### Added
 - Added the config file

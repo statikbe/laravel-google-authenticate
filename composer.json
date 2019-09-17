@@ -12,7 +12,7 @@
     "homepage": "https://github.com/statikbe/laravel-google-authenticate",
     "keywords": ["Laravel", "googleAuthenticate"],
     "require": {
-        "illuminate/support": "~5",
+        "illuminate/support": "~6",
         "google/apiclient": "^2.2",
         "laravel/socialite": "^4.2",
         "spatie/laravel-permission": "^3.0",
