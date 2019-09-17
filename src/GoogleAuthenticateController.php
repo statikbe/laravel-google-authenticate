@@ -39,7 +39,6 @@ class GoogleAuthenticateController extends Controller
      */
     public function __construct()
     {
-        //$this->middleware('auth');
         $this->middleware('guest')->except('logout');
         $this->redirectTo = env('AUTH_REDIRECT_URL');
     }
@@ -67,13 +66,15 @@ class GoogleAuthenticateController extends Controller
     {
         try {
             $user = Socialite::driver('google')->user();
-            $authUser = $this->findOrCreateUser($user, 'google');
+            $authUser = $this->findOrCreate($user, 'google');
             Auth::login($authUser, true);
             
             return redirect($this->redirectTo)->with('success', 'Successfully logged in with your Google Account.');
             
         } catch (AuthenticationException $e) {
-            return redirect('/')->withErrors(['msg', 'You are not authorized to use Google Login!']);
+            return redirect('/')->with(['danger', 'You are not authorized to use Google Login!']);
+        } catch (\Exception $e) {
+            return redirect('/')->with(['danger', 'Something went wrong during authentication. Try again later.']);
         }
     }
     
@@ -87,7 +88,7 @@ class GoogleAuthenticateController extends Controller
      * @return  User
      * @throws AuthenticationException
      */
-    public function findOrCreateUser($user, $provider)
+    private function findOrCreate($user, $provider)
     {
         $authUser = User::where('provider_id', $user->id)->first();
         
@@ -95,27 +96,30 @@ class GoogleAuthenticateController extends Controller
             return $authUser;
         }
         
-        
         if (isset($user->email)) {
             $emailArray = explode('@', $user->email);
             if ($emailArray[1] == env('AUTH_ROLE_DOMAIN')) {
-                $user =  User::create([
-                    'name'     => $user->name,
-                    'email'    => $user->email,
-                    'provider' => $provider,
-                    'provider_id' => $user->id
-                ]);
-                
-                $adminRole = Role::where('name', env('AUTH_ROLE_ADMIN'))->first();
-                if (!$adminRole) {
-                    $adminRole = Role::create(['name' => env('AUTH_ROLE_ADMIN')]);
-                }
-                $user->assignRole($adminRole);
-                
-                return $user;
+                throw new AuthenticationException();
             }
-            throw new AuthenticationException();
+
+            $user =  User::create([
+                'name'     => $user->name,
+                'email'    => $user->email,
+                'provider' => $provider,
+                'provider_id' => $user->id
+            ]);
+                
+            $adminRole = Role::where('name', env('AUTH_ROLE_ADMIN'))->first();
+            if (!$adminRole) {
+                $adminRole = Role::create(['name' => env('AUTH_ROLE_ADMIN')]);
+            }
+            
+            $user->assignRole($adminRole);
+            
+            return $user;
         }
+
+        throw new AuthenticationException();
         
     }
     
