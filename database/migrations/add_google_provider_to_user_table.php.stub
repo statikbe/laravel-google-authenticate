@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class addgoogleprovidertousertable extends Migration
+class AddGoogleProviderToUserTable extends Migration
 {
     /**
      * Run the migrations.
@@ -16,8 +16,8 @@ class addgoogleprovidertousertable extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('email')->nullable()->change();
             $table->string('password', 60)->nullable()->change();
-            $table->string('provider');
-            $table->string('provider_id');
+            $table->string('provider')->nullable();
+            $table->string('provider_id')->nullable();
         });
     }
 
@@ -29,7 +29,10 @@ class addgoogleprovidertousertable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->string('email')->change();
+			$table->string('password', 60)->change();
+            $table->dropColumn('provider');
+            $table->dropColumn('provider_id');
         });
     }
 }
