@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
+## Version 2.0.2
+### Changed
+- Added nullable to provider and provider_id columns
+- Fixed readme for publishing migration and config
 ## Version 2.0.1
 ### Changed
 - Updated composer package illuminate/support for Laravel 6

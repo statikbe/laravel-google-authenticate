@@ -16,10 +16,9 @@ $ composer require statikbe/laravel-google-authenticate
 
 The package will automatically register itself.
 
-You can publish the migration with:
+You can publish the migration and config with following command:
 ```shell
-php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migrations"
-
+php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider"
 ```
 
 To add the needed columns in your database run:
