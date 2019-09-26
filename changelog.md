@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
+## Version 2.0.3
+### Changed
+- Fixed bug in authentication check on role
 ## Version 2.0.2
 ### Changed
 - Added nullable to provider and provider_id columns
