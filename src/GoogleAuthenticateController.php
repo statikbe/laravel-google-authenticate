@@ -98,7 +98,7 @@ class GoogleAuthenticateController extends Controller
         
         if (isset($user->email)) {
             $emailArray = explode('@', $user->email);
-            if ($emailArray[1] == env('AUTH_ROLE_DOMAIN')) {
+            if ($emailArray[1] !== env('AUTH_ROLE_DOMAIN')) {
                 throw new AuthenticationException();
             }
 
