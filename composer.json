@@ -7,6 +7,10 @@
             "name": "Kristof Serré",
             "email": "kristof@statik.be",
             "homepage": "https://www.statik.be"
+        }, {
+            "name": "Kobe Christiaensen",
+            "email": "kobe@statik.be",
+            "homepage": "https://www.statik.be"
         }
     ],
     "homepage": "https://github.com/statikbe/laravel-google-authenticate",
