@@ -17,9 +17,9 @@ return  [
         'no_role' => [
             //'domain.be',
         ],
-        'admin' => [
-            'statik.be',
-        ],
+        //'admin' => [
+        //    'statik.be',
+        //],
         //'RoleName' => [
         //    'domain.com',
         //    'other.org'
@@ -32,7 +32,6 @@ return  [
     |--------------------------------------------------------------------------
     |
     | Sets the redirect url after login
-    |
     |
     */
 
