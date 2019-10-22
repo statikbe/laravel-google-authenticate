@@ -2,7 +2,12 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
-## Version 3.0
+## Version 3.0.1
+### Changed
+- Fixed markdown typos
+- Removed statik.be from roles array in config file 
+
+## Version 3.0.0
 ### Changed
 - Rewrote config file to revive it's relevance
 - Moved following values from .env to config:
