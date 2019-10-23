@@ -2,6 +2,15 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 3.1.0
+### Changed
+- Switched the `user_columns` array key and value.
+### Added
+- Comments in our Controller
+- `!` option for domains to make them be ignored: f.e. `!statik.be` will ignore 'statik.be' addresses.
+- The use of multiple google values for 1 user table.
+- Login with google even if the user account pre-existed (based on email)
+
 ## Version 3.0.1
 ### Changed
 - Fixed markdown typos
