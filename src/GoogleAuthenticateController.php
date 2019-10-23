@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class GoogleAuthenticateController extends Controller
 {
@@ -28,6 +29,17 @@ class GoogleAuthenticateController extends Controller
      * @var string
      */
     protected $redirectTo = '/';
+
+    const GOOGLE_VALUES = [
+        'name',
+        'email_verified',
+        'email',
+        'given_name',
+        'family_name',
+        'picture',
+        'nickname',
+        'locale',
+    ];
 
     /**
      * Create a new controller instance.
@@ -77,33 +89,42 @@ class GoogleAuthenticateController extends Controller
      * If a user has registered before using social auth, return the user
      * else, create a new user object.
      *
-     * @param  $user Socialite user object
+     * @param  $googleUser Socialite user object
      * @param $provider Socialite auth provider
      *
      * @return  User
      * @throws AuthenticationException
      */
-    private function findOrCreate($user, $provider)
+    private function findOrCreate($googleUser, $provider)
     {
-        if (isset($user->email)) {
-
-            $userData = $this->fillUserData($user);
+        if (isset($googleUser->email)) {
+            //make userFillableArray
+            $userData = $this->fillUserData($googleUser);
             $userData['provider'] = $provider;
-            $userData['provider_id'] = $user->id;
+            $userData['provider_id'] = $googleUser->id;
 
-            $emailArray = explode('@', $user->email);
+            //get user's mail domain
+            $emailArray = explode('@', $googleUser->email);
             $emailDomain = $emailArray[1];
 
-            //if ($emailArray[1] !== env('AUTH_ROLE_DOMAIN')) {
-            //    throw new AuthenticationException();
-            //}
-
+            //retrieve roles from config and loop them
             $roles = config('google-auth.roles');
             foreach ($roles as $role => $domains) {
+
+                //find ignorable domains and place them from the domains array to the domainsToIgnore array
+                $domainsToIgnore = $this->cleanDomains($domains);
+
+                //continue if the user domain is found inside the domainsToIgnore array
+                if ($domainsToIgnore){
+                    if (in_array($emailDomain, $domainsToIgnore)) {
+                        continue;
+                    }
+                }
 
                 //find first or create $roleModel
                 $roleModel = ($role === 'no_role') ? null : Role::firstOrCreate(['name' => $role]);
 
+                //if there are domains registered we need to check if the user domain is found in the array, otherwise continue
                 if ($domains) {
                     if (in_array($emailDomain, $domains)) {
                         $user = $this->createUser($userData, $roleModel);
@@ -111,11 +132,15 @@ class GoogleAuthenticateController extends Controller
                     continue;
                 }
 
+                //if no continues above have been called a user will be created (for example if no domains were provided)
                 $user = $this->createUser($userData, $roleModel);
                 continue;
             }
 
-            return $user;
+            //return the found or created user or throw exception
+            if ($user){
+                return $user;
+            }
         }
 
         throw new AuthenticationException();
@@ -123,30 +148,42 @@ class GoogleAuthenticateController extends Controller
 
     /**
      * @param $user Socialite user object
-     * @return array
+     * @return array $data
      */
     private function fillUserData($user)
     {
+        //get user table columns
         $columns = config('google-auth.user_columns');
         $user = $user->getRaw();
-
         $data = [];
 
-        foreach ($columns as $googleData => $columnName) {
-            if ($googleData === 'email_verified') {
-                $data[$columnName] = ($user[$googleData]) ? now()->toDateTimeString() : null;
+        foreach ($columns as  $columnName => $values) {
+            //check for google values
+            $this->checkForGoogleData($values, $user);
 
-                continue;
-            }
-            $data[$columnName] = $user[$googleData];
+            //implode values and add them to the correct column
+            $data[$columnName] = implode('',$values);
         }
 
         return $data;
     }
 
-    public function createUser($userData, $roleModel)
+    /**
+     * @param array $userData
+     * @param Role $roleModel
+     * @return User $user
+     */
+    private function createUser($userData, $roleModel)
     {
-        $user = User::updateOrCreate(['provider_id' => $userData['provider_id']] , $userData);
+        //search for possible user with this email but without google provider
+        $user = User::where('email' , $userData['email'])->whereNull('provider_id')->first();
+        if ($user){
+            //filling found user
+            $user->update($userData);
+        } else {
+            //update or create user and return it
+            $user = User::updateOrCreate(['provider_id' => $userData['provider_id']] , $userData);
+        }
 
         //verify user
         if (!$user->email_verified_at && $userData['email_verified_at']){
@@ -154,10 +191,54 @@ class GoogleAuthenticateController extends Controller
             $user->save();
         }
 
+        //add role
         if ($roleModel) {
             $user->assignRole($roleModel);
         }
 
         return $user;
+    }
+
+    /**
+     * @param array $domains
+     * @return array $domainsToIgnore
+     */
+    private function cleanDomains(&$domains){
+        $domainsToIgnore = [];
+        if ($domains){
+            foreach ($domains as $key => $domain){
+                //find domains starting with !, remove them from domains array, add them to ignore list
+                if (substr($domain, 0, 1 ) === "!"){
+                    $domainsToIgnore[] = Str::replaceFirst('!', '',$domain);
+                    unset($domains[$key]);
+                }
+            }
+        }
+
+        return $domainsToIgnore;
+    }
+
+    /**
+     * @param array $values
+     * @param $user Socialite user object
+     */
+    private function checkForGoogleData(&$values, $user){
+
+        //loop values provided from config
+        foreach ($values as $key => $value){
+
+            //if email_verified make sure it returns a datetime
+            if ($value === 'email_verified') {
+                $values[$key] = ($user[$value]) ? now()->toDateTimeString() : null;
+                continue;
+            }
+
+            //if value found in google_values array, return it's google value
+            if (in_array($value,self::GOOGLE_VALUES)){
+                $values[$key] = $user[$value];
+                continue;
+            }
+
+        }
     }
 }

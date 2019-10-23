@@ -49,37 +49,58 @@ The next step is to add the following lines in your ```services.php```
 Info on how to create a Google Auth Client id and secret can be
 found [on their documentation page](https://developers.google.com/identity/protocols/OAuth2).
 
+Finally you can add google login route to your views: `{{ route('google.auth.login') }}`.
+
 
 ### Config
-Finaly you can config the package in  ```config/google-auth.php```.
+You can config the package in  ```config/google-auth.php```.
 
 #### Roles
-You can customize who gets what role. Or even what email domains are allowed to login. For example: The following config would result in this situation: You can only receive the `admin` role if your email is: `*@statik.be`. (If your email is something else you will still be logged-in without a role).
+You can customize who gets what role. Or even what email domains are allowed to login. For example: 
+The following config would result in this situation: 
+You can only receive the `admin` role if your email is: `*@statik.be`. 
+(If your email is something else you will still be logged-in without a role).
+you can also exclude domains from receiving a role. To do this use `!` at the start of your domain.
 
 ``` php 
 'roles' => [
         'no_role' => [
-            //
+            //              //everyone can login
         ],
         'admin' => [
-            'statik.be',
+            'statik.be',    //only statik.be would receive the admin role
+        ],
+        'regular_user' => [
+            '!statik.be',   //everyone except statik.be would receive this role
         ],
 ]
 ```
 
 #### User table
-You can customize how a user is saved. The following array will create the fillable data for your user. The array keys are Google's returned keys, the array values are the columns you would like the Google's returned value to be stored in.
+You can customize how a user is saved. The config array `user_columns` will create the fillable data for your user. 
+The array keys are your user column names, the array values are what should be stored. (Make sure the value is an array).
+You can add multiple values per key, these will be glued together.
+The following values would be filled by google's returned data, before being glued.
 
 ``` php
+const GOOGLE_VALUES = [
+        'name',
+        'email_verified',
+        'email',
+        'given_name',
+        'family_name',
+        'picture',
+        'nickname',
+        'locale',
+];
+```
+For example in your config:
+``` php
 'user_columns' => [
-        'name' => 'name',
-        'email_verified' => 'email_verified_at', //will be changed from boolean to current date
-        'email' => 'email',
-        //'given_name' => 'first_name',
-        //'family_name' => 'last_name'
-        //'picture' => 'picture',    // picture url
-        //'nickname' => 'nickname',
-        //'locale' => 'nickname',   // 'en' for example
+        'name' => ['name', ' (', 'locale', ')']     // John Doe (en)
+        'email_verified_at' => ['email_verified'],  // 2019-10-23 14:31:50
+        'email' => ['email'],                       // john@doe.com
+        'other data' => ['blablabla'],              // blablabla
 ]
 ```
 

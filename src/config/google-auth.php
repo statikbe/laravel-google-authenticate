@@ -22,7 +22,7 @@ return  [
         //],
         //'RoleName' => [
         //    'domain.com',
-        //    'other.org'
+        //    '!other.org'
         //],
     ],
 
@@ -47,23 +47,26 @@ return  [
     | model you can edit them here.
     |
     | 'user_columns' => [
-    |    'google_key' => 'column_name',
+    |    'column_name' => ['google_key' , 'google_key'],
     | ]
     |
     | The values provided in comment are also returned by google
     | but are not used in a regular Laravel User model.
+    | You can also provide multiple values for one column. These will be
+    | glued together, you can add your own values as value inside the array. ['name',' (','locale', ')']
     |
     */
 
     'user_columns' => [
-        'name' => 'name',
-        'email_verified' => 'email_verified_at', //will be changed from boolean to current date
-        'email' => 'email',
-        //'given_name' => 'first_name',
-        //'family_name' => 'last_name'
-        //'picture' => 'picture',    // picture url
-        //'nickname' => 'nickname',
-        //'locale' => 'nickname',   // 'en' for example
+        'name' => ['name'],
+        'email_verified_at' => ['email_verified'], //will be changed from boolean to current date
+        'email' => ['email'],
+        //'first_name' => ['given_name'],
+        //'last_name' => ['family_name'],
+        //'picture' => ['picture'],    // picture url
+        //'locale' => ['locale'],   // 'en' for example
+        //'link' => ['link'],
+
     ]
 
 ];
