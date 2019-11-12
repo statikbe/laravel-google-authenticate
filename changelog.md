@@ -27,7 +27,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 ```
 - Renamed Statikbe to statikbe (in the service provider)
 - Changed publish views tag from GoogleAuthenticate:views to laravel-google-authenticate.views
-###Added
+### Added
 - Multiple roles support
 - Multiple domains support
 - Custom user table columns support
