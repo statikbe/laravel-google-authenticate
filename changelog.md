@@ -1,7 +1,9 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
-
+## Version 3.1.1
+### Updated
+- Updated version for illumnicate/support to work with php 7*
 ## Version 3.1.0
 ### Changed
 - Switched the `user_columns` array key and value.
