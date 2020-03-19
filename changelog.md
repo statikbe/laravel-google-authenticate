@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
-## Version 3.1.1
+## Version 3.1.2
 ### Updated
 - Updated version for illumnicate/support to work with php 7*
 ## Version 3.1.0
