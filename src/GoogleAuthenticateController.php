@@ -2,13 +2,12 @@
 
 namespace Statikbe\GoogleAuthenticate;
 
-use App\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Str;
 
 class GoogleAuthenticateController extends Controller
 {
@@ -31,15 +30,10 @@ class GoogleAuthenticateController extends Controller
     protected $redirectTo = '/';
 
     const GOOGLE_VALUES = [
-        'name',
-        'email_verified',
-        'email',
-        'given_name',
-        'family_name',
-        'picture',
-        'nickname',
-        'locale',
+        'name', 'email_verified', 'email', 'given_name', 'family_name', 'picture', 'nickname', 'locale',
     ];
+
+    protected $userModel;
 
     /**
      * Create a new controller instance.
@@ -50,6 +44,9 @@ class GoogleAuthenticateController extends Controller
     {
         $this->middleware('guest')->except('logout');
         $this->redirectTo = config('google-auth.redirect_url');
+
+        $userNamespace = config('auth.providers.users.model');
+        $this->userModel = new $userNamespace;
     }
 
     public function getLogout()
@@ -110,12 +107,11 @@ class GoogleAuthenticateController extends Controller
             //retrieve roles from config and loop them
             $roles = config('google-auth.roles');
             foreach ($roles as $role => $domains) {
-
                 //find ignorable domains and place them from the domains array to the domainsToIgnore array
                 $domainsToIgnore = $this->cleanDomains($domains);
 
                 //continue if the user domain is found inside the domainsToIgnore array
-                if ($domainsToIgnore){
+                if ($domainsToIgnore) {
                     if (in_array($emailDomain, $domainsToIgnore)) {
                         continue;
                     }
@@ -123,7 +119,6 @@ class GoogleAuthenticateController extends Controller
 
                 //find first or create $roleModel
                 $roleModel = ($role === 'no_role') ? null : Role::firstOrCreate(['name' => $role]);
-
                 //if there are domains registered we need to check if the user domain is found in the array, otherwise continue
                 if ($domains) {
                     if (in_array($emailDomain, $domains)) {
@@ -138,7 +133,7 @@ class GoogleAuthenticateController extends Controller
             }
 
             //return the found or created user or throw exception
-            if ($user){
+            if ($user) {
                 return $user;
             }
         }
@@ -157,12 +152,12 @@ class GoogleAuthenticateController extends Controller
         $user = $user->getRaw();
         $data = [];
 
-        foreach ($columns as  $columnName => $values) {
+        foreach ($columns as $columnName => $values) {
             //check for google values
             $this->checkForGoogleData($values, $user);
 
             //implode values and add them to the correct column
-            $data[$columnName] = implode('',$values);
+            $data[$columnName] = implode('', $values);
         }
 
         return $data;
@@ -176,17 +171,18 @@ class GoogleAuthenticateController extends Controller
     private function createUser($userData, $roleModel)
     {
         //search for possible user with this email but without google provider
-        $user = User::where('email' , $userData['email'])->whereNull('provider_id')->first();
-        if ($user){
+
+        $user = $this->userModel::where('email', $userData['email'])->whereNull('provider_id')->first();
+        if ($user) {
             //filling found user
             $user->update($userData);
         } else {
             //update or create user and return it
-            $user = User::updateOrCreate(['provider_id' => $userData['provider_id']] , $userData);
+            $user = $this->userModel::updateOrCreate(['provider_id' => $userData['provider_id']], $userData);
         }
 
         //verify user
-        if (!$user->email_verified_at && $userData['email_verified_at']){
+        if (!$user->email_verified_at && $userData['email_verified_at']) {
             $user->email_verified_at = $userData['email_verified_at'];
             $user->save();
         }
@@ -203,13 +199,14 @@ class GoogleAuthenticateController extends Controller
      * @param array $domains
      * @return array $domainsToIgnore
      */
-    private function cleanDomains(&$domains){
+    private function cleanDomains(&$domains)
+    {
         $domainsToIgnore = [];
-        if ($domains){
-            foreach ($domains as $key => $domain){
+        if ($domains) {
+            foreach ($domains as $key => $domain) {
                 //find domains starting with !, remove them from domains array, add them to ignore list
-                if (substr($domain, 0, 1 ) === "!"){
-                    $domainsToIgnore[] = Str::replaceFirst('!', '',$domain);
+                if (substr($domain, 0, 1) === "!") {
+                    $domainsToIgnore[] = Str::replaceFirst('!', '', $domain);
                     unset($domains[$key]);
                 }
             }
@@ -222,10 +219,11 @@ class GoogleAuthenticateController extends Controller
      * @param array $values
      * @param $user Socialite user object
      */
-    private function checkForGoogleData(&$values, $user){
+    private function checkForGoogleData(&$values, $user)
+    {
 
         //loop values provided from config
-        foreach ($values as $key => $value){
+        foreach ($values as $key => $value) {
 
             //if email_verified make sure it returns a datetime
             if ($value === 'email_verified') {
@@ -234,11 +232,10 @@ class GoogleAuthenticateController extends Controller
             }
 
             //if value found in google_values array, return it's google value
-            if (in_array($value,self::GOOGLE_VALUES)){
+            if (in_array($value, self::GOOGLE_VALUES)) {
                 $values[$key] = $user[$value];
                 continue;
             }
-
         }
     }
 }
