@@ -49,14 +49,6 @@ class GoogleAuthenticateController extends Controller
         $this->userModel = new $userNamespace;
     }
 
-    public function getLogout()
-    {
-        $this->auth->logout();
-        Session::flush();
-
-        return redirect('/');
-    }
-
     /**
      * Redirect the user to the Google authentication page.
      *
