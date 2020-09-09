@@ -4,7 +4,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 
 ## Version 3.3.0
 ### Updated
-- Updated version for illumnicate/support to work with php 7*
+- Updated version for illumnicate/support to work with php 8*
 ## Version 3.2.1
 ### Changed
 - Removed the `getLogout` action as it was not used
