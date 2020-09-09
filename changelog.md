@@ -2,6 +2,9 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 3.3.0
+### Updated
+- Updated version for illumnicate/support to work with php 7*
 ## Version 3.2.0
 ### Updated
 - User model will now check which namespace is used for the model and then creates a user from there
