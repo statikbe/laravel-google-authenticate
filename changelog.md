@@ -2,6 +2,9 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 3.3.1
+### Updated
+- Updated version for laravel/socialite & google/apiclient
 ## Version 3.3.0
 ### Updated
 - Updated version for illumnicate/support to work with php 8*
