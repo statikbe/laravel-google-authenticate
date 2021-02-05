@@ -1,7 +1,10 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
-
+## Version 4.0.0
+### Updated
+- Updated structure to be more consistent with other packages
+- Updated upgrade-guide.md file for new version
 ## Version 3.3.1
 ### Updated
 - Updated version for laravel/socialite & google/apiclient
