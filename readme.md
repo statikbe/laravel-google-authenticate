@@ -1,6 +1,5 @@
 # GoogleAuthenticator
 
-
 This module gives you the option to let you (and your users) log in with Google on your Laravel application. 
 You can specify Roles that your user will receive upon login. These can be protected using the domain of the users email. 
 
@@ -19,7 +18,7 @@ The package will automatically register itself.
 
 You can publish the migration and config with following command:
 ``` shell
-php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider"
+php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migration"
 ```
 
 To add the needed columns in your database run:
@@ -53,7 +52,11 @@ Finally you can add google login route to your views: `{{ route('google.auth.log
 
 
 ### Config
-You can config the package in  ```config/google-auth.php```.
+Publish the config file
+
+```bash
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="config"
+```
 
 #### Roles
 You can customize who gets what role. Or even what email domains are allowed to login. For example: 
@@ -107,11 +110,11 @@ For example in your config:
 ## Publishing
 You can publish the views and translations files using:
 ``` shell
-php artisan vendor:publish --tag=laravel-google-authenticate.views
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="views"
 ```
 and 
 ``` shell
-php artisan vendor:publish --tag=laravel-google-authenticate.translations
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="lang"
 ```
 
 ## Security

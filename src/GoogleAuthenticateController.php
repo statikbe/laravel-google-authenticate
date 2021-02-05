@@ -66,11 +66,11 @@ class GoogleAuthenticateController extends Controller
             $authUser = $this->findOrCreate($user, 'google');
             Auth::login($authUser, true);
 
-            return redirect($this->redirectTo)->with('success', __('statikbe::google-auth.success'));
+            return redirect($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
         } catch (AuthenticationException $e) {
-            return redirect('/')->with(['danger', __('statikbe::google-auth.unauthenticated')]);
+            return redirect('/')->with(['danger', __('google-authenticate::messages.unauthenticated')]);
         } catch (\Exception $e) {
-            return redirect('/')->with(['danger', __('statikbe::google-auth.error')]);
+            return redirect('/')->with(['danger', __('google-authenticate::messages.error')]);
         }
     }
 

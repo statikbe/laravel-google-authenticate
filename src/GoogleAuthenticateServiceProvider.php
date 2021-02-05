@@ -13,21 +13,16 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //publishes
-        $this->publishes([
-            __DIR__.'/config/google-auth.php' => config_path('google-auth.php'),
-        ], 'config');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'google-authenticate');
 
         $this->publishes([
             __DIR__.'/../database/migrations/add_google_provider_to_user_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_add_google_provider_to_user_table.php'),
         ], 'migrations');
 
         //loaders
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'statikbe');
-
         $this->loadRoutesFrom(__DIR__.'/routes.php');
 
-        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'statikbe');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'google-authenticate');
 
         // Publishing is only necessary when using the CLI:
         if ($this->app->runningInConsole()) {
@@ -43,7 +38,7 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__.'/config/google-auth.php', 'statikbe'
+            __DIR__.'/config/google-authenticate.php', 'google-authenticate'
         );
 
         // Register the service the package provides.
@@ -69,14 +64,19 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
      */
     protected function bootForConsole()
     {
-        // Publishing the views.
+        // Publishing the views
         $this->publishes([
-            __DIR__.'/../resources/views' => base_path('resources/views/vendor/statikbe'),
-        ], 'laravel-google-authenticate.views');
+            __DIR__.'/../resources/views' => base_path('resources/views/vendor/google-authenticate'),
+        ], 'views');
 
         //publish the translations
         $this->publishes([
-            __DIR__.'/../resources/lang' => resource_path('lang/vendor/statikbe'),
-        ], 'laravel-google-authenticate.translations');
+            __DIR__.'/../resources/lang' => resource_path('lang/vendor/google-authenticate'),
+        ], 'lang');
+
+        //publishes config file
+        $this->publishes([
+            __DIR__.'/config/google-authenticate.php' => config_path('google-authenticate.php'),
+        ], 'config');
     }
 }
