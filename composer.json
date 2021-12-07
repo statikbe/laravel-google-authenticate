@@ -14,13 +14,15 @@
         }
     ],
     "homepage": "https://github.com/statikbe/laravel-google-authenticate",
-    "keywords": ["Laravel", "googleAuthenticate"],
+    "keywords": ["Laravel", "google", "authenticate", "socialite"],
     "require": {
         "illuminate/support": "^6.0|^7.0|^8.0",
-        "google/apiclient": "^2.7",
-        "laravel/socialite": "^5.0",
-        "spatie/laravel-permission": "^3.0",
-        "doctrine/dbal": "^2.8"
+        "illuminate/routing": "^6.0|^7.0|^8.0",
+        "google/apiclient": "^2.12",
+        "laravel/socialite": "^5.2"
+    },
+    "suggest": {
+        "doctrine/dbal": "If you are using the provided migration you will need doctrine/dbal."
     },
     "autoload": {
         "psr-4": {

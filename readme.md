@@ -1,6 +1,5 @@
 # GoogleAuthenticator
 
-
 This module gives you the option to let you (and your users) log in with Google on your Laravel application. 
 You can specify Roles that your user will receive upon login. These can be protected using the domain of the users email. 
 
@@ -17,9 +16,9 @@ $ composer require statikbe/laravel-google-authenticate
 
 The package will automatically register itself.
 
-You can publish the migration and config with following command:
+You can publish the migration with following command:
 ``` shell
-php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider"
+php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migration"
 ```
 
 To add the needed columns in your database run:
@@ -27,7 +26,7 @@ To add the needed columns in your database run:
 php artisan migrate
 ``` 
 
-Add the ``` use HasGoogleAuth``` trait in your ```User.php``` class.
+Add the ```use HasGoogleAuth``` trait in your ```User.php``` class.
 This will provide the necessary fillable options to your User.
 
 In your .env file you should include the following keys:
@@ -37,7 +36,7 @@ GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET"
 CALLBACK_URL_GOOGLE="https://www.domain.com/login/google/callback"
 ```
 
-The next step is to add the following lines in your ```services.php```
+The next step is to add the following lines in your ```services.php``` config file
 ``` php
 'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
@@ -49,31 +48,27 @@ The next step is to add the following lines in your ```services.php```
 Info on how to create a Google Auth Client id and secret can be
 found [on their documentation page](https://developers.google.com/identity/protocols/OAuth2).
 
-Finally you can add google login route to your views: `{{ route('google.auth.login') }}`.
+Finally, you can add google login route to your login and register views: `{{ route('google.auth.login') }}`.
 
 
 ### Config
-You can config the package in  ```config/google-auth.php```.
+Publish the config file
 
-#### Roles
-You can customize who gets what role. Or even what email domains are allowed to login. For example: 
-The following config would result in this situation: 
-You can only receive the `admin` role if your email is: `*@statik.be`. 
-(If your email is something else you will still be logged-in without a role).
-you can also exclude domains from receiving a role. To do this use `!` at the start of your domain.
+```bash
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="config"
+```
 
-``` php 
-'roles' => [
-        'no_role' => [
-            //              //everyone can login
-        ],
-        'admin' => [
-            'statik.be',    //only statik.be would receive the admin role
-        ],
-        'regular_user' => [
-            '!statik.be',   //everyone except statik.be would receive this role
-        ],
-]
+#### Email domains
+You can change the email domains that can login using Google. The three available options are:
+- `allowed`-array: only the domains in this array can login using Google
+- `disabled`-array: domains in this array can not login using Google
+- Empty / null: all domains can use the Google login
+
+``` php
+    'domains' => [
+        //'allowed' => ['statik.com'],
+        //'disabled' => ['google.com'],
+    ],
 ```
 
 #### User table
@@ -107,11 +102,11 @@ For example in your config:
 ## Publishing
 You can publish the views and translations files using:
 ``` shell
-php artisan vendor:publish --tag=laravel-google-authenticate.views
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="views"
 ```
 and 
 ``` shell
-php artisan vendor:publish --tag=laravel-google-authenticate.translations
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="lang"
 ```
 
 ## Security
