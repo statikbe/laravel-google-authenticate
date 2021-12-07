@@ -2,30 +2,6 @@
 
 return  [
 
-   /*
-   |--------------------------------------------------------------------------
-   | Login domains and their Roles
-   |--------------------------------------------------------------------------
-   |
-   | Here you can provide the domains your users email should contain to
-   | receive certain roles.
-   | If there is no need to check the domain you can leave the array empty.
-   |
-   */
-
-    'roles' => [
-        'no_role' => [
-            //'domain.be',
-        ],
-        //'admin' => [
-        //    'statik.be',
-        //],
-        //'RoleName' => [
-        //    'domain.com',
-        //    '!other.org'
-        //],
-    ],
-
     /*
     |--------------------------------------------------------------------------
     | Redirect url
@@ -67,6 +43,23 @@ return  [
         //'locale' => ['locale'],   // 'en' for example
         //'link' => ['link'],
 
-    ]
+    ],
 
+   /*
+   |--------------------------------------------------------------------------
+   | Configure what domains can log in using google
+   |--------------------------------------------------------------------------
+   |
+   | If any domain can log in using google you can leave this array empty.
+   | If only certain domains can log in using google
+   |   you can add them to the 'allowed' array.
+   | If some domains are not allowed to log in using google
+   |   you can add them to the 'disabled' array.
+   |
+   */
+
+    'domains' => [
+        //'allowed' => ['statik.be'],
+        //'disabled' => ['google.com'],
+    ],
 ];

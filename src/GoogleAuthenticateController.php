@@ -2,12 +2,14 @@
 
 namespace Statikbe\GoogleAuthenticate;
 
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
+use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Facades\Socialite;
-use Spatie\Permission\Models\Role;
+use Laravel\Socialite\Two\InvalidStateException;
+use Statikbe\GoogleAuthenticate\Exceptions\GoogleAuthenticationException;
 
 class GoogleAuthenticateController extends Controller
 {
@@ -30,7 +32,14 @@ class GoogleAuthenticateController extends Controller
     protected $redirectTo = '/';
 
     const GOOGLE_VALUES = [
-        'name', 'email_verified', 'email', 'given_name', 'family_name', 'picture', 'nickname', 'locale',
+        'name',
+        'email_verified',
+        'email',
+        'given_name',
+        'family_name',
+        'picture',
+        'nickname',
+        'locale',
     ];
 
     protected $userModel;
@@ -43,7 +52,7 @@ class GoogleAuthenticateController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
-        $this->redirectTo = config('google-auth.redirect_url');
+        $this->redirectTo = config('google-authenticate.redirect_url');
 
         $userNamespace = config('auth.providers.users.model');
         $this->userModel = new $userNamespace;
@@ -56,21 +65,25 @@ class GoogleAuthenticateController extends Controller
      */
     public function redirectToProvider()
     {
+        request()->session()->flash('googleLoginUrl', url()->previous());
+
         return Socialite::driver('google')->scopes(['openid', 'profile', 'email'])->redirect();
     }
 
     public function handleProviderCallback()
     {
+        $loginUrl = session('googleLoginUrl') ?? '/';
+
         try {
             $user = Socialite::driver('google')->user();
             $authUser = $this->findOrCreate($user, 'google');
             Auth::login($authUser, true);
 
-            return redirect($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
-        } catch (AuthenticationException $e) {
-            return redirect('/')->with(['danger', __('google-authenticate::messages.unauthenticated')]);
-        } catch (\Exception $e) {
-            return redirect('/')->with(['danger', __('google-authenticate::messages.error')]);
+            return Redirect::to($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
+        } catch (GoogleAuthenticationException $e) {
+            return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.unauthenticated')]);
+        } catch (InvalidStateException $e) {
+            return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.error')]);
         }
     }
 
@@ -78,13 +91,13 @@ class GoogleAuthenticateController extends Controller
      * If a user has registered before using social auth, return the user
      * else, create a new user object.
      *
-     * @param  $googleUser Socialite user object
-     * @param $provider Socialite auth provider
+     * @param AbstractUser $googleUser
+     * @param string $provider
      *
      * @return  User
-     * @throws AuthenticationException
+     * @throws GoogleAuthenticationException
      */
-    private function findOrCreate($googleUser, $provider)
+    private function findOrCreate(AbstractUser $googleUser, string $provider)
     {
         if (isset($googleUser->email)) {
             //make userFillableArray
@@ -97,50 +110,41 @@ class GoogleAuthenticateController extends Controller
             $emailDomain = $emailArray[1];
 
             //retrieve roles from config and loop them
-            $roles = config('google-auth.roles');
-            foreach ($roles as $role => $domains) {
-                //find ignorable domains and place them from the domains array to the domainsToIgnore array
-                $domainsToIgnore = $this->cleanDomains($domains);
-
-                //continue if the user domain is found inside the domainsToIgnore array
+            $domains = config('google-authenticate.domains', null);
+            if (!empty($domains)) {
+                //If the disabled array is filled we check the domain against it
+                $domainsToIgnore = $domains['disabled'] ?? null;
                 if ($domainsToIgnore) {
                     if (in_array($emailDomain, $domainsToIgnore)) {
-                        continue;
+                        throw new GoogleAuthenticationException();
                     }
                 }
 
-                //find first or create $roleModel
-                $roleModel = ($role === 'no_role') ? null : Role::firstOrCreate(['name' => $role]);
-                //if there are domains registered we need to check if the user domain is found in the array, otherwise continue
-                if ($domains) {
-                    if (in_array($emailDomain, $domains)) {
-                        $user = $this->createUser($userData, $roleModel);
+                //If the allowed array is filled we check the domain against it
+                $domainsToValidate = $domains['allowed'] ?? null;
+                if (!empty($domainsToValidate)) {
+                    if (in_array($emailDomain, $domainsToValidate)) {
+                        return $this->createUser($userData);
                     }
-                    continue;
+                    throw new GoogleAuthenticationException();
                 }
-
-                //if no continues above have been called a user will be created (for example if no domains were provided)
-                $user = $this->createUser($userData, $roleModel);
-                continue;
             }
 
-            //return the found or created user or throw exception
-            if ($user) {
-                return $user;
-            }
+            //If no domain stuff is triggered we create a user
+            return $this->createUser($userData);
         }
 
-        throw new AuthenticationException();
+        throw new GoogleAuthenticationException();
     }
 
     /**
-     * @param $user Socialite user object
+     * @param AbstractUser $user
      * @return array $data
      */
-    private function fillUserData($user)
+    private function fillUserData(AbstractUser $user)
     {
         //get user table columns
-        $columns = config('google-auth.user_columns');
+        $columns = config('google-authenticate.user_columns', []);
         $user = $user->getRaw();
         $data = [];
 
@@ -160,10 +164,9 @@ class GoogleAuthenticateController extends Controller
      * @param Role $roleModel
      * @return User $user
      */
-    private function createUser($userData, $roleModel)
+    private function createUser($userData)
     {
         //search for possible user with this email but without google provider
-
         $user = $this->userModel::where('email', $userData['email'])->whereNull('provider_id')->first();
         if ($user) {
             //filling found user
@@ -179,32 +182,7 @@ class GoogleAuthenticateController extends Controller
             $user->save();
         }
 
-        //add role
-        if ($roleModel) {
-            $user->assignRole($roleModel);
-        }
-
         return $user;
-    }
-
-    /**
-     * @param array $domains
-     * @return array $domainsToIgnore
-     */
-    private function cleanDomains(&$domains)
-    {
-        $domainsToIgnore = [];
-        if ($domains) {
-            foreach ($domains as $key => $domain) {
-                //find domains starting with !, remove them from domains array, add them to ignore list
-                if (substr($domain, 0, 1) === "!") {
-                    $domainsToIgnore[] = Str::replaceFirst('!', '', $domain);
-                    unset($domains[$key]);
-                }
-            }
-        }
-
-        return $domainsToIgnore;
     }
 
     /**
@@ -213,8 +191,7 @@ class GoogleAuthenticateController extends Controller
      */
     private function checkForGoogleData(&$values, $user)
     {
-
-        //loop values provided from config
+        //loop values provided from configInvalidStateException
         foreach ($values as $key => $value) {
 
             //if email_verified make sure it returns a datetime

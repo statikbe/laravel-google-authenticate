@@ -5,6 +5,9 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 ### Updated
 - Updated structure to be more consistent with other packages
 - Updated upgrade-guide.md file for new version
+- Removed `spatie/laravel-permission` implementation and dependency
+  - This makes the `GoogleAuthenticator` less opinionated
+  - Assigning roles can be done on the "created" method of your user
 ## Version 3.3.1
 ### Updated
 - Updated version for laravel/socialite & google/apiclient
