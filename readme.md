@@ -1,12 +1,14 @@
 # GoogleAuthenticator
 
-This module gives you the option to let you (and your users) log in with Google on your Laravel application. 
-You can specify Roles that your user will receive upon login. These can be protected using the domain of the users email. 
+This module gives you the option to let you (and your users) log in with Google on your Laravel application.
 
+[Changelog](changelog.md) - [Upgrade guides](upgrade-guide.md)
+
+---
 
 ## Installation
 
-Via Composer
+Using Composer
 
 ``` bash
 $ composer require statikbe/laravel-google-authenticate
@@ -16,12 +18,12 @@ $ composer require statikbe/laravel-google-authenticate
 
 The package will automatically register itself.
 
-You can publish the migration with following command:
+You can publish the migration with the following command:
 ``` shell
 php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migration"
 ```
 
-To add the needed columns in your database run:
+To add the needed columns to your database run:
  ``` shell
 php artisan migrate
 ``` 

@@ -31,11 +31,37 @@ php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthe
 - Templates
   - Copy the `home.blade.php`, `login.blade.php` & `register.blade.php` files from the `resources/views/vendor/statikbe` folder to the newly created
     folder `resources/view/vendor/google-authenticate` folder
-  - Remove the view files situated in `resources/vie ws/vendor/statikbe`
+  - Remove the view files situated in `resources/views/vendor/statikbe`
 - Translations
   - Copy your translations from the files in the  `lang/vendor/statikbe` folder and paste them in the newly created files made in the `lang/vendor/google-authenticate` folder
   - Remove the `lang/vendor/statikbe` folder
 
+### Step 3: Roles (optional)
+We are not using the roles in version 4 anymore. This is to keep the package less opinionated. 
+If you were using the roles setting in version 3 you might want to move that logic to the `created` event of your user. 
+For example: 
+
+``` php 
+    //Add this in your Auth model
+    protected static function boot()
+    {
+        parent::boot();
+
+        self::created(function(User $model){
+            //get user's mail domain
+            $emailArray = explode('@', $model->email);
+            $emailDomain = $emailArray[1];
+
+            switch ($emailDomain){
+                case 'statik.be':
+                    $model->assignRole(\Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']));
+                //Add any other domain or role to the switch
+            }
+        });
+    }
+```
+
+---
 
 
 ## How to upgrade from version 2 to version 3. 
