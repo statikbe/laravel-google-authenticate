@@ -1,7 +1,21 @@
 # Upgrade Guide
 
 ---
+## How to upgrade from v4.0.0 to v4.1.0
 
+### Step 1: Publishing
+#### Config
+
+#### Views
+``` shell
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="views"
+``` 
+
+### Step 2: Copy new files
+- Templates
+  - Remove the home.blade.php file
+  - Copy the dashboard.blade.php, login.blade.php & register.blade.php files to the views/auth folder.
+---
 ## How to upgrade from v3.3.1 to v4
 
 Update your ```composer.json``` file to require ```"statikbe/laravel-google-authenticate": "^4.0"```.

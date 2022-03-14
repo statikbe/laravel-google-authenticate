@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
+## Version 4.1.0
+- Updated version illumninate/support to use Laravel 8  or 9
+- Updated auth templates with new format from Laravel + google login button
+- Removed Laravel support for version 6 and 7 
+- Removed google/apiclient
 ## Version 4.0.0
 ### Updated
 - Updated structure to be more consistent with other packages
@@ -13,7 +18,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 - Updated version for laravel/socialite & google/apiclient
 ## Version 3.3.0
 ### Updated
-- Updated version for illumnicate/support to work with php 8*
+- Updated version for illumninate/support to work with php 8*
 ## Version 3.2.1
 ### Changed
 - Removed the `getLogout` action as it was not used
@@ -23,7 +28,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 - User model will now check which namespace is used for the model and then creates a user from there
 ## Version 3.1.2
 ### Updated
-- Updated version for illumnicate/support to work with php 7*
+- Updated version for illumninate/support to work with php 7*
 
 ## Version 3.1.0
 ### Changed
