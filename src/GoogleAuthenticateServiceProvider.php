@@ -66,12 +66,16 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
     {
         // Publishing the views
         $this->publishes([
-            __DIR__.'/../resources/views' => base_path('resources/views/vendor/google-authenticate'),
+            __DIR__.'/../resources/views' => resource_path('views/vendor/google-authenticate'),
         ], 'views');
 
         //publish the translations
+        $langPath = 'vendor/google-authenticate';
+        $langPath = (function_exists('lang_path'))
+            ? lang_path($langPath)
+            : resource_path('lang/'.$langPath);
         $this->publishes([
-            __DIR__.'/../resources/lang' => resource_path('lang/vendor/google-authenticate'),
+            __DIR__.'/../resources/lang' => $langPath,
         ], 'lang');
 
         //publishes config file
