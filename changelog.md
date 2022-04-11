@@ -1,8 +1,10 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
+## Version 4.1.2
+- Prevent loading the views,should only be used for publishing. This fixes an issue with caching.
 ## Version 4.1.1
-- Prevent loading the views,should only be used for publishing. This fixes an issue with caching.   
+- Fixed lang publishing for laravel 9
 ## Version 4.1.0
 - Updated version illumninate/support to use Laravel 8  or 9
 - Updated auth templates with new format from Laravel + google login button
