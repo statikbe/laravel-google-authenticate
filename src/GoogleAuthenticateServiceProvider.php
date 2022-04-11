@@ -13,7 +13,7 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'google-authenticate');
+        //$this->loadViewsFrom(__DIR__.'/../resources/views', 'google-authenticate');
 
         $this->publishes([
             __DIR__.'/../database/migrations/add_google_provider_to_user_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_add_google_provider_to_user_table.php'),
