@@ -53,6 +53,7 @@ php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthe
 ### Step 3: Roles (optional)
 We are not using the roles in version 4 anymore. This is to keep the package less opinionated. 
 If you were using the roles setting in version 3 you might want to move that logic to the `created` event of your user. 
+
 For example: 
 
 ``` php 
@@ -74,6 +75,7 @@ For example:
         });
     }
 ```
+**WARNING** This code is not secure if you are not validating emails. If this is the case you should first check if the registration came from a social login before assigning a role.
 
 ---
 
