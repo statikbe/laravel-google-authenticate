@@ -11,7 +11,7 @@ This module gives you the option to let you (and your users) log in with Google 
 Using Composer
 
 ``` bash
-$ composer require statikbe/laravel-google-authenticate
+composer require statikbe/laravel-google-authenticate
 ```
 
 ## Usage
@@ -20,7 +20,7 @@ The package will automatically register itself.
 
 You can publish the migration with the following command:
 ``` shell
-php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migration"
+php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migrations"
 ```
 
 To add the needed columns to your database run:
