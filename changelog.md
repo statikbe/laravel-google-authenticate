@@ -1,6 +1,8 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
+## Version 4.1.3
+- Added banner image in readme
 ## Version 4.1.2
 - Prevent loading the views,should only be used for publishing. This fixes an issue with caching.
 ## Version 4.1.1

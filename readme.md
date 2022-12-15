@@ -1,6 +1,14 @@
-# GoogleAuthenticator
+<p align="center"><img src="assets/card.png" alt="Card of Laravel Nova Chained Translation Manager"></p>
 
-This module gives you the option to let you (and your users) log in with Google on your Laravel application.
+# Google Authenticator
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/statikbe/laravel-google-authenticate.svg?style=flat-square)](https://packagist.org/packages/statikbe/laravel-google-authenticate)
+[![Total Downloads](https://img.shields.io/packagist/dt/statikbe/laravel-google-authenticate.svg?style=flat-square)](https://packagist.org/packages/statikbe/laravel-google-authenticate)
+
+
+This module gives you the option to let you (and your users) log in with their Google account on your Laravel application.
+
+This is initially used to let only people log in from certain workspaces. But can be enabled to let everyone log in. 
+
 
 [Changelog](changelog.md) - [Upgrade guides](upgrade-guide.md)
 
