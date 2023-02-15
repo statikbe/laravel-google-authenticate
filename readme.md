@@ -28,7 +28,7 @@ The package will automatically register itself.
 
 You can publish the migration with the following command:
 ``` shell
-php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migration"
+php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migrations"
 ```
 
 To add the needed columns to your database run:

@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
+## Version 4.2.0
+- Added support for Laravel 10
+- Added return types
+- Removed support for Laravel 8
 ## Version 4.1.3
 - Added banner image in readme
 ## Version 4.1.2
@@ -10,7 +14,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 ## Version 4.1.0
 - Updated version illumninate/support to use Laravel 8  or 9
 - Updated auth templates with new format from Laravel + google login button
-- Removed Laravel support for version 6 and 7 
+- Removed Laravel support for version 6 and 7
 - Removed google/apiclient
 ## Version 4.0.0
 ### Updated
@@ -49,7 +53,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 ## Version 3.0.1
 ### Changed
 - Fixed markdown typos
-- Removed statik.be from roles array in config file 
+- Removed statik.be from roles array in config file
 
 ## Version 3.0.0
 ### Changed
@@ -87,7 +91,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 - Added names for routes & use them in overwritten auth views
 ### Changed
 - Updated packages to work with laravel 6
-- Cleaned up some code 
+- Cleaned up some code
 
 ## Version 1.0.9
 ### Added

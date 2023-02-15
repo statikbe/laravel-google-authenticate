@@ -2,10 +2,11 @@
 
 namespace Statikbe\GoogleAuthenticate;
 
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Str;
 use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -29,7 +30,7 @@ class GoogleAuthenticateController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/';
+    protected mixed $redirectTo = '/';
 
     const GOOGLE_VALUES = [
         'name',
@@ -61,16 +62,16 @@ class GoogleAuthenticateController extends Controller
     /**
      * Redirect the user to the Google authentication page.
      *
-     * @return \Illuminate\Http\Response
+     * @return RedirectResponse
      */
-    public function redirectToProvider()
+    public function redirectToProvider(): RedirectResponse
     {
         request()->session()->flash('googleLoginUrl', url()->previous());
 
         return Socialite::driver('google')->scopes(['openid', 'profile', 'email'])->redirect();
     }
 
-    public function handleProviderCallback()
+    public function handleProviderCallback(): RedirectResponse
     {
         $loginUrl = session('googleLoginUrl') ?? '/';
 
@@ -97,7 +98,7 @@ class GoogleAuthenticateController extends Controller
      * @return  User
      * @throws GoogleAuthenticationException
      */
-    private function findOrCreate(AbstractUser $googleUser, string $provider)
+    private function findOrCreate(AbstractUser $googleUser, string $provider): User
     {
         if (isset($googleUser->email)) {
             //make userFillableArray
@@ -115,7 +116,7 @@ class GoogleAuthenticateController extends Controller
                 //If the disabled array is filled we check the domain against it
                 $domainsToIgnore = $domains['disabled'] ?? null;
                 if ($domainsToIgnore) {
-                    if (in_array($emailDomain, $domainsToIgnore)) {
+                    if (in_array($emailDomain, $domainsToIgnore, true)) {
                         throw new GoogleAuthenticationException();
                     }
                 }
@@ -123,7 +124,7 @@ class GoogleAuthenticateController extends Controller
                 //If the allowed array is filled we check the domain against it
                 $domainsToValidate = $domains['allowed'] ?? null;
                 if (!empty($domainsToValidate)) {
-                    if (in_array($emailDomain, $domainsToValidate)) {
+                    if (in_array($emailDomain, $domainsToValidate, true)) {
                         return $this->createUser($userData);
                     }
                     throw new GoogleAuthenticationException();
@@ -141,7 +142,7 @@ class GoogleAuthenticateController extends Controller
      * @param AbstractUser $user
      * @return array $data
      */
-    private function fillUserData(AbstractUser $user)
+    private function fillUserData(AbstractUser $user): array
     {
         //get user table columns
         $columns = config('google-authenticate.user_columns', []);
@@ -161,12 +162,11 @@ class GoogleAuthenticateController extends Controller
 
     /**
      * @param array $userData
-     * @param Role $roleModel
      * @return User $user
      */
-    private function createUser($userData)
+    private function createUser(array $userData): User
     {
-        //search for possible user with this email but without google provider
+        //search for possible user with this email but without Google provider
         $user = $this->userModel::where('email', $userData['email'])->whereNull('provider_id')->first();
         if ($user) {
             //filling found user
@@ -187,9 +187,9 @@ class GoogleAuthenticateController extends Controller
 
     /**
      * @param array $values
-     * @param $user Socialite user object
+     * @param $user user object
      */
-    private function checkForGoogleData(&$values, $user)
+    private function checkForGoogleData(array &$values, $user): void
     {
         //loop values provided from configInvalidStateException
         foreach ($values as $key => $value) {
@@ -201,9 +201,8 @@ class GoogleAuthenticateController extends Controller
             }
 
             //if value found in google_values array, return it's google value
-            if (in_array($value, self::GOOGLE_VALUES)) {
+            if (in_array($value, self::GOOGLE_VALUES, true)) {
                 $values[$key] = $user[$value];
-                continue;
             }
         }
     }
