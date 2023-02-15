@@ -11,18 +11,18 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         //$this->loadViewsFrom(__DIR__.'/../resources/views', 'google-authenticate');
 
         $this->publishes([
-            __DIR__.'/../database/migrations/add_google_provider_to_user_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_add_google_provider_to_user_table.php'),
+            __DIR__ . '/../database/migrations/add_google_provider_to_user_table.php.stub' => database_path('migrations/' . date('Y_m_d_His', time()) . '_add_google_provider_to_user_table.php'),
         ], 'migrations');
 
         //loaders
-        $this->loadRoutesFrom(__DIR__.'/routes.php');
+        $this->loadRoutesFrom(__DIR__ . '/routes.php');
 
-        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'google-authenticate');
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'google-authenticate');
 
         // Publishing is only necessary when using the CLI:
         if ($this->app->runningInConsole()) {
@@ -35,10 +35,10 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__.'/config/google-authenticate.php', 'google-authenticate'
+            __DIR__ . '/config/google-authenticate.php', 'google-authenticate'
         );
 
         // Register the service the package provides.
@@ -52,7 +52,7 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
      *
      * @return array
      */
-    public function provides()
+    public function provides(): array
     {
         return ['GoogleAuthenticate'];
     }
@@ -62,25 +62,25 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    protected function bootForConsole()
+    protected function bootForConsole(): void
     {
         // Publishing the views
         $this->publishes([
-            __DIR__.'/../resources/views' => resource_path('views/vendor/google-authenticate'),
+            __DIR__ . '/../resources/views' => resource_path('views/vendor/google-authenticate'),
         ], 'views');
 
         //publish the translations
         $langPath = 'vendor/google-authenticate';
         $langPath = (function_exists('lang_path'))
             ? lang_path($langPath)
-            : resource_path('lang/'.$langPath);
+            : resource_path('lang/' . $langPath);
         $this->publishes([
-            __DIR__.'/../resources/lang' => $langPath,
+            __DIR__ . '/../resources/lang' => $langPath,
         ], 'lang');
 
         //publishes config file
         $this->publishes([
-            __DIR__.'/config/google-authenticate.php' => config_path('google-authenticate.php'),
+            __DIR__ . '/config/google-authenticate.php' => config_path('google-authenticate.php'),
         ], 'config');
     }
 }
