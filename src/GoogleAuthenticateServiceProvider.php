@@ -17,7 +17,7 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
 
         $this->publishes([
             __DIR__ . '/../database/migrations/add_google_provider_to_user_table.php.stub' => database_path('migrations/' . date('Y_m_d_His', time()) . '_add_google_provider_to_user_table.php'),
-        ], 'migrations');
+        ], 'google-migrations');
 
         //loaders
         $this->loadRoutesFrom(__DIR__ . '/routes.php');
@@ -67,7 +67,7 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
         // Publishing the views
         $this->publishes([
             __DIR__ . '/../resources/views' => resource_path('views/vendor/google-authenticate'),
-        ], 'views');
+        ], 'google-views');
 
         //publish the translations
         $langPath = 'vendor/google-authenticate';
@@ -76,11 +76,11 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
             : resource_path('lang/' . $langPath);
         $this->publishes([
             __DIR__ . '/../resources/lang' => $langPath,
-        ], 'lang');
+        ], 'google-lang');
 
         //publishes config file
         $this->publishes([
             __DIR__ . '/config/google-authenticate.php' => config_path('google-authenticate.php'),
-        ], 'config');
+        ], 'google-config');
     }
 }

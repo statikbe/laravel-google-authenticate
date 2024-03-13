@@ -16,12 +16,12 @@
     "homepage": "https://github.com/statikbe/laravel-google-authenticate",
     "keywords": ["Laravel", "google", "authenticate", "socialite"],
     "require": {
-        "illuminate/support": "^9.0|^10.0",
-        "illuminate/routing": "^9.0|^10.0",
+        "illuminate/support": "^9.0|^10.0|^11.0",
+        "illuminate/routing": "^9.0|^10.0|^11.0",
         "laravel/socialite": "^5.6"
     },
     "suggest": {
-        "doctrine/dbal": "If you are using the provided migration you will need doctrine/dbal."
+        "doctrine/dbal": "If you are using the provided migration you will need doctrine/dbal. You won't need this in Laravel versions >= 11"
     },
     "autoload": {
         "psr-4": {

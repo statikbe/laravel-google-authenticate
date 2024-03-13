@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
+
+## Version 4.3.0
+- Added support for Laravel 11
+- Updated group names for publishing config/views/etc
 ## Version 4.2.0
 - Added support for Laravel 10
 - Added return types
