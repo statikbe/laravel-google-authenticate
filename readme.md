@@ -28,7 +28,7 @@ The package will automatically register itself.
 
 You can publish the migration with the following command:
 ``` shell
-php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider" --tag="google-migrations"
 ```
 
 To add the needed columns to your database run:
@@ -65,7 +65,7 @@ Finally, you can add google login route to your login and register views: `{{ ro
 Publish the config file
 
 ```bash
-php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="config"
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="google-config"
 ```
 
 #### Email domains
@@ -112,11 +112,11 @@ For example in your config:
 ## Publishing
 You can publish the views and translations files using:
 ``` shell
-php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="views"
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="google-views"
 ```
 and 
 ``` shell
-php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="lang"
+php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="google-lang"
 ```
 
 ## Security
