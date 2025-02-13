@@ -62,4 +62,17 @@ return  [
         //'allowed' => ['statik.be'],
         //'disabled' => ['google.com'],
     ],
+
+    /*
+   |--------------------------------------------------------------------------
+   | Configure what middleware you want on your route
+   |--------------------------------------------------------------------------
+   |
+   | If you need to add custom middleware on the login/google route
+   | you can simply do this by adding them in the array below.
+   | Default the web middleware will be loaded, but this can be altered for
+   | something like multi tenancy
+   | ['web', TennantMiddleware::class]
+   */
+    'middleware' => ['web'],
 ];
