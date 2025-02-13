@@ -81,6 +81,15 @@ You can change the email domains that can login using Google. The three availabl
     ],
 ```
 
+You can add an extra middleware on the auth logins by adding them in the `google-authenticate.php` config file.
+#### Custom middlewares
+``` php
+    'middleware' => [
+        'web',
+        CustomMiddleware::class
+    ], 
+```
+
 #### User table
 You can customize how a user is saved. The config array `user_columns` will create the fillable data for your user. 
 The array keys are your user column names, the array values are what should be stored. (Make sure the value is an array).
