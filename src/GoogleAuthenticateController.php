@@ -3,6 +3,7 @@
 namespace Statikbe\GoogleAuthenticate;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -33,14 +34,7 @@ class GoogleAuthenticateController extends Controller
     protected mixed $redirectTo = '/';
 
     const GOOGLE_VALUES = [
-        'name',
-        'email_verified',
-        'email',
-        'given_name',
-        'family_name',
-        'picture',
-        'nickname',
-        'locale',
+        'name', 'email_verified', 'email', 'given_name', 'family_name', 'picture', 'nickname', 'locale',
     ];
 
     protected $userModel;
@@ -54,9 +48,6 @@ class GoogleAuthenticateController extends Controller
     {
         $this->middleware('guest')->except('logout');
         $this->redirectTo = config('google-authenticate.redirect_url');
-
-        $userNamespace = config('auth.providers.users.model');
-        $this->userModel = new $userNamespace;
     }
 
     /**
@@ -88,12 +79,22 @@ class GoogleAuthenticateController extends Controller
         }
     }
 
+    public function getUserModel(): Model
+    {
+        if (!isset($this->userModel)) {
+            $userNamespace = config('auth.providers.users.model');
+            $this->userModel = new $userNamespace;
+        }
+
+        return $this->userModel;
+    }
+
     /**
      * If a user has registered before using social auth, return the user
      * else, create a new user object.
      *
-     * @param AbstractUser $googleUser
-     * @param string $provider
+     * @param  AbstractUser  $googleUser
+     * @param  string  $provider
      *
      * @return  User
      * @throws GoogleAuthenticationException
@@ -139,7 +140,7 @@ class GoogleAuthenticateController extends Controller
     }
 
     /**
-     * @param AbstractUser $user
+     * @param  AbstractUser  $user
      * @return array $data
      */
     private function fillUserData(AbstractUser $user): array
@@ -161,19 +162,19 @@ class GoogleAuthenticateController extends Controller
     }
 
     /**
-     * @param array $userData
+     * @param  array  $userData
      * @return User $user
      */
     private function createUser(array $userData): User
     {
         //search for possible user with this email but without Google provider
-        $user = $this->userModel::where('email', $userData['email'])->whereNull('provider_id')->first();
+        $user = $this->getUserModel()::where('email', $userData['email'])->whereNull('provider_id')->first();
         if ($user) {
             //filling found user
             $user->update($userData);
         } else {
             //update or create user and return it
-            $user = $this->userModel::updateOrCreate(['provider_id' => $userData['provider_id']], $userData);
+            $user = $this->getUserModel()::updateOrCreate(['provider_id' => $userData['provider_id']], $userData);
         }
 
         //verify user
@@ -186,14 +187,13 @@ class GoogleAuthenticateController extends Controller
     }
 
     /**
-     * @param array $values
+     * @param  array  $values
      * @param $user user object
      */
     private function checkForGoogleData(array &$values, $user): void
     {
         //loop values provided from configInvalidStateException
         foreach ($values as $key => $value) {
-
             //if email_verified make sure it returns a datetime
             if ($value === 'email_verified') {
                 $values[$key] = ($user[$value]) ? now()->toDateTimeString() : null;

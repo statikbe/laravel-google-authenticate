@@ -2,6 +2,8 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 4.4.1
+- Fixed User model creation in Google authenticateController
 ## Version 4.4.0
 - Added support for custom middleware on routes
 ## Version 4.3.0
