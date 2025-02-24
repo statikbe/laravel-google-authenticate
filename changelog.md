@@ -2,6 +2,9 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 4.5.0
+- Added support for Laravel 12
+- Removed support for Laravel 9
 ## Version 4.4.1
 - Fixed User model creation in Google authenticateController
 ## Version 4.4.0
