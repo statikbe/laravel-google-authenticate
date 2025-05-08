@@ -76,7 +76,7 @@ You can change the email domains that can login using Google. The three availabl
 
 ``` php
     'domains' => [
-        //'allowed' => ['statik.com'],
+        //'allowed' => ['statik.be'],
         //'disabled' => ['google.com'],
     ],
 ```
