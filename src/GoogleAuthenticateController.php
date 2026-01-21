@@ -52,8 +52,6 @@ class GoogleAuthenticateController extends Controller
 
     /**
      * Redirect the user to the Google authentication page.
-     *
-     * @return RedirectResponse
      */
     public function redirectToProvider(): RedirectResponse
     {
@@ -65,6 +63,10 @@ class GoogleAuthenticateController extends Controller
     public function handleProviderCallback(): RedirectResponse
     {
         $loginUrl = session('googleLoginUrl') ?? '/';
+
+        if (request()->has('error')) {
+            return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.error')]);
+        }
 
         try {
             $user = Socialite::driver('google')->user();
