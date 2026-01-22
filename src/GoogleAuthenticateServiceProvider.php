@@ -8,21 +8,19 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
 {
     /**
      * Perform post-registration booting of services.
-     *
-     * @return void
      */
     public function boot(): void
     {
-        //$this->loadViewsFrom(__DIR__.'/../resources/views', 'google-authenticate');
+        // $this->loadViewsFrom(__DIR__.'/../resources/views', 'google-authenticate');
 
         $this->publishes([
-            __DIR__ . '/../database/migrations/add_google_provider_to_user_table.php.stub' => database_path('migrations/' . date('Y_m_d_His', time()) . '_add_google_provider_to_user_table.php'),
+            __DIR__.'/../database/migrations/add_google_provider_to_user_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_add_google_provider_to_user_table.php'),
         ], 'google-migrations');
 
-        //loaders
-        $this->loadRoutesFrom(__DIR__ . '/routes.php');
+        // loaders
+        $this->loadRoutesFrom(__DIR__.'/routes.php');
 
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'google-authenticate');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'google-authenticate');
 
         // Publishing is only necessary when using the CLI:
         if ($this->app->runningInConsole()) {
@@ -32,25 +30,21 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
 
     /**
      * Register any package services.
-     *
-     * @return void
      */
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/config/google-authenticate.php', 'google-authenticate'
+            __DIR__.'/config/google-authenticate.php', 'google-authenticate'
         );
 
         // Register the service the package provides.
         $this->app->singleton('GoogleAuthenticate', function ($app) {
-            return new GoogleAuthenticateController();
+            return new GoogleAuthenticateController;
         });
     }
 
     /**
      * Get the services provided by the provider.
-     *
-     * @return array
      */
     public function provides(): array
     {
@@ -59,28 +53,26 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
 
     /**
      * Console-specific booting.
-     *
-     * @return void
      */
     protected function bootForConsole(): void
     {
         // Publishing the views
         $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/google-authenticate'),
+            __DIR__.'/../resources/views' => resource_path('views/vendor/google-authenticate'),
         ], 'google-views');
 
-        //publish the translations
+        // publish the translations
         $langPath = 'vendor/google-authenticate';
         $langPath = (function_exists('lang_path'))
             ? lang_path($langPath)
-            : resource_path('lang/' . $langPath);
+            : resource_path('lang/'.$langPath);
         $this->publishes([
-            __DIR__ . '/../resources/lang' => $langPath,
+            __DIR__.'/../resources/lang' => $langPath,
         ], 'google-lang');
 
-        //publishes config file
+        // publishes config file
         $this->publishes([
-            __DIR__ . '/config/google-authenticate.php' => config_path('google-authenticate.php'),
+            __DIR__.'/config/google-authenticate.php' => config_path('google-authenticate.php'),
         ], 'google-config');
     }
 }

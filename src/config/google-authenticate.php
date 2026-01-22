@@ -1,6 +1,6 @@
 <?php
 
-return  [
+return [
 
     /*
     |--------------------------------------------------------------------------
@@ -35,17 +35,17 @@ return  [
 
     'user_columns' => [
         'name' => ['name'],
-        'email_verified_at' => ['email_verified'], //will be changed from boolean to current date
+        'email_verified_at' => ['email_verified'], // will be changed from boolean to current date
         'email' => ['email'],
-        //'first_name' => ['given_name'],
-        //'last_name' => ['family_name'],
-        //'picture' => ['picture'],    // picture url
-        //'locale' => ['locale'],   // 'en' for example
-        //'link' => ['link'],
+        // 'first_name' => ['given_name'],
+        // 'last_name' => ['family_name'],
+        // 'picture' => ['picture'],    // picture url
+        // 'locale' => ['locale'],   // 'en' for example
+        // 'link' => ['link'],
 
     ],
 
-   /*
+    /*
    |--------------------------------------------------------------------------
    | Configure what domains can log in using google
    |--------------------------------------------------------------------------
@@ -59,8 +59,8 @@ return  [
    */
 
     'domains' => [
-        //'allowed' => ['statik.be'],
-        //'disabled' => ['google.com'],
+        // 'allowed' => ['statik.be'],
+        // 'disabled' => ['google.com'],
     ],
 
     /*

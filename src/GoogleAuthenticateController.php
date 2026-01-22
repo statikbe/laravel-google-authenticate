@@ -83,7 +83,7 @@ class GoogleAuthenticateController extends Controller
 
     public function getUserModel(): Model
     {
-        if (!isset($this->userModel)) {
+        if (! isset($this->userModel)) {
             $userNamespace = config('auth.providers.users.model');
             $this->userModel = new $userNamespace;
         }
@@ -95,68 +95,64 @@ class GoogleAuthenticateController extends Controller
      * If a user has registered before using social auth, return the user
      * else, create a new user object.
      *
-     * @param  AbstractUser  $googleUser
-     * @param  string  $provider
      *
-     * @return  User
      * @throws GoogleAuthenticationException
      */
     private function findOrCreate(AbstractUser $googleUser, string $provider): User
     {
         if (isset($googleUser->email)) {
-            //make userFillableArray
+            // make userFillableArray
             $userData = $this->fillUserData($googleUser);
             $userData['provider'] = $provider;
             $userData['provider_id'] = $googleUser->id;
 
-            //get user's mail domain
+            // get user's mail domain
             $emailArray = explode('@', $googleUser->email);
             $emailDomain = $emailArray[1];
 
-            //retrieve roles from config and loop them
+            // retrieve roles from config and loop them
             $domains = config('google-authenticate.domains', null);
-            if (!empty($domains)) {
-                //If the disabled array is filled we check the domain against it
+            if (! empty($domains)) {
+                // If the disabled array is filled we check the domain against it
                 $domainsToIgnore = $domains['disabled'] ?? null;
                 if ($domainsToIgnore) {
                     if (in_array($emailDomain, $domainsToIgnore, true)) {
-                        throw new GoogleAuthenticationException();
+                        throw new GoogleAuthenticationException;
                     }
                 }
 
-                //If the allowed array is filled we check the domain against it
+                // If the allowed array is filled we check the domain against it
                 $domainsToValidate = $domains['allowed'] ?? null;
-                if (!empty($domainsToValidate)) {
+                if (! empty($domainsToValidate)) {
                     if (in_array($emailDomain, $domainsToValidate, true)) {
                         return $this->createUser($userData);
                     }
-                    throw new GoogleAuthenticationException();
+                    throw new GoogleAuthenticationException;
                 }
             }
 
-            //If no domain stuff is triggered we create a user
+            // If no domain stuff is triggered we create a user
             return $this->createUser($userData);
         }
 
-        throw new GoogleAuthenticationException();
+        throw new GoogleAuthenticationException;
     }
 
     /**
-     * @param  AbstractUser  $user
      * @return array $data
      */
     private function fillUserData(AbstractUser $user): array
     {
-        //get user table columns
+        // get user table columns
         $columns = config('google-authenticate.user_columns', []);
         $user = $user->getRaw();
         $data = [];
 
         foreach ($columns as $columnName => $values) {
-            //check for google values
+            // check for google values
             $this->checkForGoogleData($values, $user);
 
-            //implode values and add them to the correct column
+            // implode values and add them to the correct column
             $data[$columnName] = implode('', $values);
         }
 
@@ -164,23 +160,22 @@ class GoogleAuthenticateController extends Controller
     }
 
     /**
-     * @param  array  $userData
      * @return User $user
      */
     private function createUser(array $userData): User
     {
-        //search for possible user with this email but without Google provider
+        // search for possible user with this email but without Google provider
         $user = $this->getUserModel()::where('email', $userData['email'])->whereNull('provider_id')->first();
         if ($user) {
-            //filling found user
+            // filling found user
             $user->update($userData);
         } else {
-            //update or create user and return it
+            // update or create user and return it
             $user = $this->getUserModel()::updateOrCreate(['provider_id' => $userData['provider_id']], $userData);
         }
 
-        //verify user
-        if (!$user->email_verified_at && $userData['email_verified_at']) {
+        // verify user
+        if (! $user->email_verified_at && $userData['email_verified_at']) {
             $user->email_verified_at = $userData['email_verified_at'];
             $user->save();
         }
@@ -189,20 +184,20 @@ class GoogleAuthenticateController extends Controller
     }
 
     /**
-     * @param  array  $values
-     * @param $user user object
+     * @param  $user  user object
      */
     private function checkForGoogleData(array &$values, $user): void
     {
-        //loop values provided from configInvalidStateException
+        // loop values provided from configInvalidStateException
         foreach ($values as $key => $value) {
-            //if email_verified make sure it returns a datetime
+            // if email_verified make sure it returns a datetime
             if ($value === 'email_verified') {
                 $values[$key] = ($user[$value]) ? now()->toDateTimeString() : null;
+
                 continue;
             }
 
-            //if value found in google_values array, return it's google value
+            // if value found in google_values array, return it's google value
             if (in_array($value, self::GOOGLE_VALUES, true)) {
                 $values[$key] = $user[$value];
             }

@@ -2,6 +2,4 @@
 
 namespace Statikbe\GoogleAuthenticate\Exceptions;
 
-class GoogleAuthenticationException extends \Exception
-{
-}
+class GoogleAuthenticationException extends \Exception {}
