@@ -59,8 +59,9 @@ return [
    */
 
     'domains' => [
-        // 'allowed' => ['statik.be'],
-        // 'disabled' => ['google.com'],
+        //'allowed' => ['statik.be', 'shavedmonkey.be'],
+        //'disabled' => ['google.com'],
+
     ],
 
     /*

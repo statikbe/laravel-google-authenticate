@@ -2,6 +2,10 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 4.5.2
+- Don't update email_verified_at on login
+## Version 4.5.1
+- Added default allowed domains
 ## Version 4.5.0
 - Added support for Laravel 12
 - Removed support for Laravel 9

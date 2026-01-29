@@ -164,7 +164,13 @@ class GoogleAuthenticateController extends Controller
      */
     private function createUser(array $userData): User
     {
-        // search for possible user with this email but without Google provider
+
+        // Extract email_verified_at before mass update to handle it separately
+        $emailVerifiedAt = $userData['email_verified_at'] ?? null;
+        unset($userData['email_verified_at']);
+
+        //search for possible user with this email but without Google provider
+
         $user = $this->getUserModel()::where('email', $userData['email'])->whereNull('provider_id')->first();
         if ($user) {
             // filling found user
@@ -174,9 +180,10 @@ class GoogleAuthenticateController extends Controller
             $user = $this->getUserModel()::updateOrCreate(['provider_id' => $userData['provider_id']], $userData);
         }
 
-        // verify user
-        if (! $user->email_verified_at && $userData['email_verified_at']) {
-            $user->email_verified_at = $userData['email_verified_at'];
+        //verify user - only set if not already verified
+        if (!$user->email_verified_at && $emailVerifiedAt) {
+            $user->email_verified_at = $emailVerifiedAt;
+
             $user->save();
         }
 
