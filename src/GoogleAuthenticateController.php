@@ -26,12 +26,7 @@ class GoogleAuthenticateController extends Controller
    |
    */
 
-    /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
-    protected mixed $redirectTo = '/';
+    protected ?string $redirectTo = null;
 
     const GOOGLE_VALUES = [
         'name', 'email_verified', 'email', 'given_name', 'family_name', 'picture', 'nickname', 'locale',
@@ -74,9 +69,9 @@ class GoogleAuthenticateController extends Controller
             Auth::login($authUser, true);
 
             return Redirect::to($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
-        } catch (GoogleAuthenticationException $e) {
+        } catch (GoogleAuthenticationException) {
             return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.unauthenticated')]);
-        } catch (InvalidStateException $e) {
+        } catch (InvalidStateException) {
             return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.error')]);
         }
     }
@@ -105,10 +100,14 @@ class GoogleAuthenticateController extends Controller
             $userData = $this->fillUserData($googleUser);
             $userData['provider'] = $provider;
             $userData['provider_id'] = $googleUser->id;
+            $emailVerified = (bool) ($googleUser->getRaw()['email_verified'] ?? false);
 
             // get user's mail domain
-            $emailArray = explode('@', $googleUser->email);
-            $emailDomain = $emailArray[1];
+            $emailParts = explode('@', $googleUser->email);
+            if (count($emailParts) !== 2) {
+                throw new GoogleAuthenticationException;
+            }
+            $emailDomain = $emailParts[1];
 
             // retrieve roles from config and loop them
             $domains = config('google-authenticate.domains', null);
@@ -125,21 +124,21 @@ class GoogleAuthenticateController extends Controller
                 $domainsToValidate = $domains['allowed'] ?? null;
                 if (! empty($domainsToValidate)) {
                     if (in_array($emailDomain, $domainsToValidate, true)) {
-                        return $this->createUser($userData);
+                        return $this->createUser($userData, $emailVerified);
                     }
                     throw new GoogleAuthenticationException;
                 }
             }
 
             // If no domain stuff is triggered we create a user
-            return $this->createUser($userData);
+            return $this->createUser($userData, $emailVerified);
         }
 
         throw new GoogleAuthenticationException;
     }
 
     /**
-     * @return array $data
+     * @return array
      */
     private function fillUserData(AbstractUser $user): array
     {
@@ -160,9 +159,11 @@ class GoogleAuthenticateController extends Controller
     }
 
     /**
-     * @return User $user
+     * @return User
+     *
+     * @throws GoogleAuthenticationException
      */
-    private function createUser(array $userData): User
+    private function createUser(array $userData, bool $emailVerified): User
     {
 
         // Extract email_verified_at before mass update to handle it separately
@@ -173,7 +174,9 @@ class GoogleAuthenticateController extends Controller
 
         $user = $this->getUserModel()::where('email', $userData['email'])->whereNull('provider_id')->first();
         if ($user) {
-            // filling found user
+            if (! $emailVerified) {
+                throw new GoogleAuthenticationException;
+            }
             $user->update($userData);
         } else {
             // update or create user and return it
@@ -191,11 +194,11 @@ class GoogleAuthenticateController extends Controller
     }
 
     /**
-     * @param  $user  user object
+     * @param array $user
      */
-    private function checkForGoogleData(array &$values, $user): void
+    private function checkForGoogleData(array &$values, array $user): void
     {
-        // loop values provided from configInvalidStateException
+        // loop values provided from config
         foreach ($values as $key => $value) {
             // if email_verified make sure it returns a datetime
             if ($value === 'email_verified') {

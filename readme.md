@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/card.png" alt="Card of Laravel Nova Chained Translation Manager"></p>
+<p align="center"><img src="assets/card.png" alt="Laravel Google Authenticate"></p>
 
 # Google Authenticator
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/statikbe/laravel-google-authenticate.svg?style=flat-square)](https://packagist.org/packages/statikbe/laravel-google-authenticate)
