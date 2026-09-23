@@ -14,8 +14,7 @@ class AddGoogleProviderToUserTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('email')->nullable()->change();
-            $table->string('password', 60)->nullable()->change();
+            $table->string('password')->nullable()->change();
             $table->string('provider')->nullable();
             $table->string('provider_id')->nullable();
         });
@@ -28,9 +27,10 @@ class AddGoogleProviderToUserTable extends Migration
      */
     public function down()
     {
+        // The 'password' column is deliberately left nullable: OAuth-only users have a NULL
+        // password, so restoring NOT NULL would abort the rollback (or silently coerce those
+        // NULLs to ''). A nullable password column is harmless residue after a rollback.
         Schema::table('users', function (Blueprint $table) {
-            $table->string('email')->change();
-			$table->string('password', 60)->change();
             $table->dropColumn('provider');
             $table->dropColumn('provider_id');
         });

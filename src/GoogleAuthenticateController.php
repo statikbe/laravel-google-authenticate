@@ -34,6 +34,8 @@ class GoogleAuthenticateController extends Controller
 
     protected $userModel;
 
+    protected bool $registerEnabled = false;
+
     /**
      * Create a new controller instance.
      *
@@ -43,6 +45,8 @@ class GoogleAuthenticateController extends Controller
     {
         $this->middleware('guest')->except('logout');
         $this->redirectTo = config('google-authenticate.redirect_url');
+
+        $this->registerEnabled = config('google-authenticate.register_enabled');
     }
 
     /**
@@ -50,14 +54,15 @@ class GoogleAuthenticateController extends Controller
      */
     public function redirectToProvider(): RedirectResponse
     {
-        request()->session()->flash('googleLoginUrl', url()->previous());
+        request()->session()->flash('googleLoginUrl', $this->sanitiseLoginUrl(url()->previous()));
 
         return Socialite::driver('google')->scopes(['openid', 'profile', 'email'])->redirect();
     }
 
     public function handleProviderCallback(): RedirectResponse
     {
-        $loginUrl = session('googleLoginUrl') ?? '/';
+        $sessionUrl = session('googleLoginUrl');
+        $loginUrl = $this->sanitiseLoginUrl(is_string($sessionUrl) ? $sessionUrl : null);
 
         if (request()->has('error')) {
             return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.error')]);
@@ -67,6 +72,7 @@ class GoogleAuthenticateController extends Controller
             $user = Socialite::driver('google')->user();
             $authUser = $this->findOrCreate($user, 'google');
             Auth::login($authUser, true);
+            request()->session()->regenerate();
 
             return Redirect::to($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
         } catch (GoogleAuthenticationException) {
@@ -74,6 +80,52 @@ class GoogleAuthenticateController extends Controller
         } catch (InvalidStateException) {
             return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.error')]);
         }
+    }
+
+    /**
+     * The return URL comes from the Referer header, so it is attacker controlled.
+     * Only same-host http(s) URLs and relative paths may be redirected to.
+     */
+    private function sanitiseLoginUrl(?string $url): string
+    {
+        if (blank($url)) {
+            return '/';
+        }
+
+        $parts = parse_url($url);
+        if ($parts === false) {
+            return '/';
+        }
+
+        if (! isset($parts['host'])) {
+            // A scheme without a host is never same-origin: javascript:, data:, mailto:, ...
+            if (isset($parts['scheme'])) {
+                return '/';
+            }
+
+            // Browsers normalise backslashes to slashes, so //evil.com, /\evil.com and
+            // \\evil.com are all protocol-relative even though parse_url reports no host.
+            if (preg_match('#^[/\\\\]{2}#', $url) === 1) {
+                return '/';
+            }
+
+            return $url;
+        }
+
+        if (! in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)) {
+            return '/';
+        }
+
+        // The port is deliberately ignored, so proxied and local setups keep working.
+        $allowedHosts = array_filter([parse_url((string) config('app.url'), PHP_URL_HOST), request()->getHost()]);
+
+        foreach ($allowedHosts as $allowedHost) {
+            if (strcasecmp($parts['host'], $allowedHost) === 0) {
+                return $url;
+            }
+        }
+
+        return '/';
     }
 
     public function getUserModel(): Model
@@ -123,7 +175,7 @@ class GoogleAuthenticateController extends Controller
                 // If the allowed array is filled we check the domain against it
                 $domainsToValidate = $domains['allowed'] ?? null;
                 if (! empty($domainsToValidate)) {
-                    if (in_array($emailDomain, $domainsToValidate, true)) {
+                    if (in_array($emailDomain, $domainsToValidate, true) && $this->registerEnabled) {
                         return $this->createUser($userData, $emailVerified);
                     }
                     throw new GoogleAuthenticationException;
@@ -131,10 +183,19 @@ class GoogleAuthenticateController extends Controller
             }
 
             // If no domain stuff is triggered we create a user
-            return $this->createUser($userData, $emailVerified);
+            if ($this->registerEnabled) {
+                // If no domain stuff is triggered we create a user
+                return $this->createUser($userData, $emailVerified);
+            }
+
+            //If register is disabled, check if the user exist in database, if not -> throw Google Auth Exception, else return the actual user.
+            $user =  $this->getUserModel()::where('email', $userData['email'])->first();
+            if ($user) {
+                return $user;
+            }
         }
 
-        throw new GoogleAuthenticationException;
+        throw new GoogleAuthenticationException(__('google-authenticate::messages.unauthenticated'));
     }
 
     /**
