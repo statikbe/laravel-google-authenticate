@@ -20,12 +20,29 @@
         "illuminate/routing": "^10.0|^11.0|^12.0|^13.0",
         "laravel/socialite": "^5.18"
     },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+        "pestphp/pest": "^2.34|^3.0|^4.0"
+    },
     "suggest": {
         "doctrine/dbal": "If you are using the provided migration you will need doctrine/dbal. You won't need this in Laravel versions >= 11"
     },
     "autoload": {
         "psr-4": {
             "Statikbe\\GoogleAuthenticate\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Statikbe\\GoogleAuthenticate\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
         }
     },
     "extra": {

@@ -46,7 +46,7 @@ class GoogleAuthenticateController extends Controller
         $this->middleware('guest')->except('logout');
         $this->redirectTo = config('google-authenticate.redirect_url');
 
-        $this->registerEnabled = config('google-authenticate.register_enabled');
+        $this->registerEnabled = (bool) config('google-authenticate.register_enabled', true);
     }
 
     /**
@@ -157,42 +157,40 @@ class GoogleAuthenticateController extends Controller
             // get user's mail domain
             $emailParts = explode('@', $googleUser->email);
             if (count($emailParts) !== 2) {
-                throw new GoogleAuthenticationException;
+                throw new GoogleAuthenticationException('No e-mail domain found.');
             }
-            $emailDomain = $emailParts[1];
+            $emailDomain = strtolower($emailParts[1]);
 
-            // retrieve roles from config and loop them
-            $domains = config('google-authenticate.domains', null);
-            if (! empty($domains)) {
-                // If the disabled array is filled we check the domain against it
-                $domainsToIgnore = $domains['disabled'] ?? null;
-                if ($domainsToIgnore) {
-                    if (in_array($emailDomain, $domainsToIgnore, true)) {
-                        throw new GoogleAuthenticationException;
-                    }
-                }
+            $domains = config('google-authenticate.domains', []);
+            $disabled = array_map('strtolower', $domains['disabled'] ?? []);
+            $allowed = array_map('strtolower', $domains['allowed'] ?? []);
 
-                // If the allowed array is filled we check the domain against it
-                $domainsToValidate = $domains['allowed'] ?? null;
-                if (! empty($domainsToValidate)) {
-                    if (in_array($emailDomain, $domainsToValidate, true) && $this->registerEnabled) {
-                        return $this->createUser($userData, $emailVerified);
-                    }
-                    throw new GoogleAuthenticationException;
-                }
+            if (in_array($emailDomain, $disabled, true)
+                || ($allowed && ! in_array($emailDomain, $allowed, true))) {
+                throw new GoogleAuthenticationException('E-mail domain not allowed');
             }
 
-            // If no domain stuff is triggered we create a user
             if ($this->registerEnabled) {
-                // If no domain stuff is triggered we create a user
                 return $this->createUser($userData, $emailVerified);
             }
 
-            //If register is disabled, check if the user exist in database, if not -> throw Google Auth Exception, else return the actual user.
-            $user =  $this->getUserModel()::where('email', $userData['email'])->first();
-            if ($user) {
-                return $user;
+            // Registration disabled: only existing users, and only with a verified Google email.
+            if (! $emailVerified) {
+                throw new GoogleAuthenticationException('E-mail not verified');
             }
+
+            $user = $this->getUserModel()::where('provider_id', $userData['provider_id'])->first()
+                ?? $this->getUserModel()::where('email', $userData['email'])->whereNull('provider_id')->first();
+
+            if (! $user) {
+                throw new GoogleAuthenticationException('No user found.');
+            }
+
+            if (! $user->provider_id) {
+                $user->update(['provider' => $provider, 'provider_id' => $userData['provider_id']]);
+            }
+
+            return $user;
         }
 
         throw new GoogleAuthenticationException(__('google-authenticate::messages.unauthenticated'));
@@ -236,10 +234,15 @@ class GoogleAuthenticateController extends Controller
         $user = $this->getUserModel()::where('email', $userData['email'])->whereNull('provider_id')->first();
         if ($user) {
             if (! $emailVerified) {
-                throw new GoogleAuthenticationException;
+                throw new GoogleAuthenticationException('E-mail not verified');
             }
             $user->update($userData);
         } else {
+            // email already linked to another Google account: never create a duplicate or take it over
+            if ($this->getUserModel()::where('email', $userData['email'])->where('provider_id', '!=', $userData['provider_id'])->exists()) {
+                throw new GoogleAuthenticationException('E-mail linked to another Google account');
+            }
+
             // update or create user and return it
             $user = $this->getUserModel()::updateOrCreate(['provider_id' => $userData['provider_id']], $userData);
         }

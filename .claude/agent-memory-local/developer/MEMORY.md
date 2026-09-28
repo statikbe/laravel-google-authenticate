@@ -1,0 +1,1 @@
+- [Package test setup](project_testing.md) — pest/testbench wiring, App\Models\User alias, host runner, gitignore trap

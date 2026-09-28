@@ -2,6 +2,21 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 4.6.3
+- Fixed existing users being rejected when `allowed` domains are set and registration is disabled
+- Register-disabled logins now require a verified Google email and are bound to the stored `provider_id`
+- Domain checks are case-insensitive; `allowed` applies to existing users too
+- Fixed a 500 error when registration is enabled and a Google account signs in with an email already linked to another Google account; the login is now rejected
+- `register_enabled` defaults to `true` when missing from a published config (previously threw a TypeError)
+- Added a test suite
+
+## Version 4.6.2
+- Added the `register_enabled` config option to disable registering new users via Google
+- Login return URL is restricted to same-host URLs (open redirect fix)
+- Session is regenerated after login
+- Migration stub no longer changes the `email` column; `down()` keeps `password` nullable
+- `GoogleAuthenticationException` defaults to a 403 code
+
 ## Version 4.6.1
 - Added some small optimisations
 ## Version 4.6.0

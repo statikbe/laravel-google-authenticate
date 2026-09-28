@@ -74,6 +74,8 @@ You can change the email domains that can login using Google. The three availabl
 - `disabled`-array: domains in this array can not login using Google
 - Empty / null: all domains can use the Google login
 
+The domain rules apply to existing users too, not only to new registrations. When `register_enabled` is `false`, only existing users can log in, and only with a verified Google email.
+
 ``` php
     'domains' => [
         //'allowed' => ['statik.be'],
