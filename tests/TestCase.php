@@ -34,6 +34,7 @@ abstract class TestCase extends Orchestra
         Schema::create('users', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
+            $table->string('first_name')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();

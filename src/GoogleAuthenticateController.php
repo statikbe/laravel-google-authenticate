@@ -266,14 +266,14 @@ class GoogleAuthenticateController extends Controller
         foreach ($values as $key => $value) {
             // if email_verified make sure it returns a datetime
             if ($value === 'email_verified') {
-                $values[$key] = ($user[$value]) ? now()->toDateTimeString() : null;
+                $values[$key] = ($user[$value] ?? false) ? now()->toDateTimeString() : null;
 
                 continue;
             }
 
             // if value found in google_values array, return it's google value
             if (in_array($value, self::GOOGLE_VALUES, true)) {
-                $values[$key] = $user[$value];
+                $values[$key] = $user[$value] ?? null;
             }
         }
     }

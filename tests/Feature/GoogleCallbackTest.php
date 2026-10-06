@@ -149,3 +149,23 @@ it('rejects a different google id for a linked email when registration is enable
     $this->assertGuest();
     expect(User::count())->toBe(1);
 });
+
+it('handles a google payload without given_name, family_name and email_verified', function () {
+    config([
+        'google-authenticate.user_columns' => [
+            'name' => ['name'],
+            'first_name' => ['given_name'],
+            'email' => ['email'],
+            'email_verified_at' => ['email_verified'],
+        ],
+    ]);
+    $googleUser = (new SocialiteUser)
+        ->setRaw(['name' => 'Jan', 'email' => 'jan@statik.be'])
+        ->map(['id' => 'google-123', 'name' => 'Jan', 'email' => 'jan@statik.be']);
+    Socialite::shouldReceive('driver->user')->andReturn($googleUser);
+
+    callback();
+
+    $this->assertAuthenticated();
+    expect(User::where('email', 'jan@statik.be')->first())->first_name->toBe('')->email_verified_at->toBeNull();
+});
