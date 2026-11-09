@@ -37,7 +37,7 @@ php artisan migrate
 ``` 
 
 Add the ```use HasGoogleAuth``` trait in your ```User.php``` class.
-This will provide the necessary fillable options to your User.
+The package sets `provider` and `provider_id` itself; they are not added to your `$fillable`.
 
 In your .env file you should include the following keys:
 ``` php
@@ -86,6 +86,20 @@ The domain rules apply to existing users too, not only to new registrations. Whe
 ```
 
 You can add an extra middleware on the auth logins by adding them in the `google-authenticate.php` config file.
+#### Linking existing users
+A user row that already exists with the same email, but without a Google account, is linked on first Google login only when the Google `hd` claim equals the email domain, or the email is on `gmail.com` / `googlemail.com`. Otherwise the login is refused. When linked, the row's `password` is set to `null` (if the column exists) and its `remember_token` is rotated, so credentials set before the link stop working.
+
+#### Events
+`Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered` is dispatched when a brand-new user row was created by a Google login that passed every check (verified email, domain rules, `hd`). It carries `$user` (the model), `$googleUser` (the Socialite user) and `$hostedDomain` (the `hd` claim, lowercased; empty when none was sent and no `allowed` list is set). It fires before the login, never when linking an existing row or on later logins. If a listener throws, the login fails. Use it to grant roles, never model events or mass-assigned columns:
+
+``` php
+Event::listen(GoogleUserRegistered::class, function (GoogleUserRegistered $event) {
+    if ($event->hostedDomain === 'statik.be') {
+        $event->user->assignRole('super-admin');
+    }
+});
+```
+
 #### Remember me
 Logins are not remembered by default. Set `'remember' => true` in the config to issue a remember-me cookie.
 

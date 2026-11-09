@@ -2,19 +2,10 @@
 
 namespace Statikbe\GoogleAuthenticate\Traits;
 
-trait HasGoogleAuth
-{
-    /**
-     * The attributes that are needed for Google Auth
-     */
-    protected array $auth_fillable = [
-        'provider',
-        'provider_id',
-    ];
-
-    public function getFillable(): array
-    {
-
-        return array_merge($this->fillable, $this->auth_fillable);
-    }
-}
+/**
+ * Marker trait for models that log in with Google.
+ *
+ * It deliberately adds nothing to $fillable: the package sets `provider` and `provider_id`
+ * itself with forceFill, so they are never mass-assignable through the host application.
+ */
+trait HasGoogleAuth {}
