@@ -74,12 +74,18 @@ class GoogleAuthenticateController extends Controller
         try {
             $user = Socialite::driver('google')->user();
             $hostedDomain = $this->assertLoginAllowed($user);
-            $authUser = $this->findOrCreate($user, 'google');
+            // Same transaction as the row: a throwing listener must roll the new user back, otherwise the
+            // next login is no longer "recently created" and the listener's work is lost for good.
+            // Auth::login comes after the commit, so a failed listener also leaves the visitor logged out.
+            $authUser = (new User)->getConnection()->transaction(function () use ($user, $hostedDomain): User {
+                $authUser = $this->findOrCreate($user, 'google');
 
-            // Before Auth::login: a throwing listener must leave the visitor logged out.
-            if ($authUser->wasRecentlyCreated) {
-                event(new GoogleUserRegistered($authUser, $user, $hostedDomain));
-            }
+                if ($authUser->wasRecentlyCreated) {
+                    event(new GoogleUserRegistered($authUser, $user, $hostedDomain));
+                }
+
+                return $authUser;
+            });
 
             Auth::login($authUser, (bool) config('google-authenticate.remember', false));
             request()->session()->regenerate();

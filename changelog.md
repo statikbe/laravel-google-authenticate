@@ -11,6 +11,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 - **Breaking:** linking an existing row sets `password` to `null` (when the column exists) and rotates `remember_token`
 - **Breaking:** `createUser(array $userData, bool $emailVerified)` is now `createUser(array $userData, AbstractUser $googleUser)`; the unreachable `$emailVerified` flag is gone
 - Added the `Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered` event (`$user`, `$googleUser`, `$hostedDomain`), dispatched after a new user row was created by a fully verified Google login, before the login. Not dispatched when linking or on later logins; a throwing listener aborts the login
+- `findOrCreate` and the `GoogleUserRegistered` dispatch now run in one database transaction: a throwing listener rolls back the new user, so the next login registers it again instead of leaving an orphan
 - All security checks (verified email, domain allow/disable, `hd`) now run in a private method before `findOrCreate`, so overriding `findOrCreate` / `createUser` cannot skip them
 - `findOrCreate` and `createUser` are now `protected` so they can be overridden
 

@@ -311,6 +311,29 @@ it('does not log in when a registered listener throws', function () {
     expect(fn () => callback())->toThrow(RuntimeException::class, 'boom');
 
     $this->assertGuest();
+    expect(User::count())->toBe(0);
+});
+
+it('registers again after a listener failed the first attempt', function () {
+    $fail = true;
+    $calls = 0;
+    Event::listen(GoogleUserRegistered::class, function () use (&$fail, &$calls) {
+        $calls++;
+        if ($fail) {
+            throw new RuntimeException('boom');
+        }
+    });
+    googleReturns('jan@statik.be');
+
+    $this->withoutExceptionHandling();
+    expect(fn () => callback())->toThrow(RuntimeException::class, 'boom');
+    $this->assertGuest();
+
+    $fail = false;
+    callback();
+
+    $this->assertAuthenticated();
+    expect($calls)->toBe(2)->and(User::count())->toBe(1);
 });
 
 it('refuses to link a consumer account on a non-gmail domain without hd', function (bool $registerEnabled) {
