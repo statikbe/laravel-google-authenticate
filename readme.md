@@ -37,7 +37,7 @@ php artisan migrate
 ``` 
 
 Add the ```use HasGoogleAuth``` trait in your ```User.php``` class.
-The package sets `provider` and `provider_id` itself; they are not added to your `$fillable`.
+`HasGoogleAuth` makes `provider` and `provider_id` mass-assignable. Because of that, never grant roles or privileges based on the `provider` column: use the `GoogleUserRegistered` event (see below), which only fires after all login checks passed.
 
 In your .env file you should include the following keys:
 ``` php
@@ -99,6 +99,9 @@ Event::listen(GoogleUserRegistered::class, function (GoogleUserRegistered $event
     }
 });
 ```
+
+#### Laravel Boost skill
+The package ships a [Laravel Boost](https://laravel.com/docs/boost) skill, `google-authenticate-upgrade`, that walks an agent through upgrading a 3.x/4.x project to 5.0. Boost discovers it from `resources/boost/skills` of your installed packages: run `php artisan boost:install` (first time) or `php artisan boost:update` (after updating this package), select the skill, then ask your agent to upgrade Google Authenticate. Boost is not a dependency of this package.
 
 #### Remember me
 Logins are not remembered by default. Set `'remember' => true` in the config to issue a remember-me cookie.

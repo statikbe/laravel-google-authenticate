@@ -302,7 +302,7 @@ class GoogleAuthenticateController extends Controller
      */
     protected function createUser(array $userData, AbstractUser $googleUser): User
     {
-        // provider and provider_id are never mass-assigned, see HasGoogleAuth
+        // provider and provider_id are set explicitly (forceFill), independent of $fillable
         $identity = Arr::only($userData, ['provider', 'provider_id']);
         $emailVerifiedAt = $userData['email_verified_at'] ?? null;
         $attributes = Arr::except($userData, ['provider', 'provider_id', 'email_verified_at']);

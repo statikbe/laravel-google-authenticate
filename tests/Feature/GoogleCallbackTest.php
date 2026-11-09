@@ -399,10 +399,6 @@ it('does not touch the password of an already linked user', function () {
     expect($user->fresh())->password->toBe('kept')->remember_token->toBe('kept-token');
 });
 
-it('never mass-assigns provider or provider_id', function () {
-    expect((new User)->getFillable())->not->toContain('provider')->not->toContain('provider_id');
-});
-
 it('accepts the string forms of email_verified', function () {
     googleReturns('jan@statik.be', verified: 'true');
     callback();

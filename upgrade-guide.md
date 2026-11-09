@@ -1,5 +1,7 @@
 # Upgrade Guide
 
+Using Laravel Boost? After `composer update`, run `php artisan boost:update` and ask your agent to use the `google-authenticate-upgrade` skill.
+
 ---
 ## How to upgrade from v4.x to v5.0.0
 
@@ -8,7 +10,7 @@
    User::query()->update(['remember_token' => null]);
    ```
    Set `'remember' => true` in `config/google-authenticate.php` if you want the old behaviour.
-2. **`provider` / `provider_id` are no longer fillable.** `HasGoogleAuth` does not touch `$fillable` any more. The package assigns them itself. If your own code mass-assigns them, add them to your model.
+2. **Never grant roles or privileges from the `provider` column.** `provider` / `provider_id` stay mass-assignable (`HasGoogleAuth` is unchanged), so a user-controlled payload can set them. Use the `GoogleUserRegistered` event instead (see 6).
 3. **Linking rules.** An existing user matched by email is only linked when the Google `hd` claim equals the email domain, or the email is on `gmail.com` / `googlemail.com`. Linking also sets `password` to `null` and rotates `remember_token`. Users with a custom domain on a non-Workspace Google account can no longer take over an existing row.
 4. **Unverified emails** are refused everywhere, and with `domains.allowed` set the `hd` claim must match too.
 5. **Overrides.** If you override `createUser`, the signature is now `createUser(array $userData, AbstractUser $googleUser): User`. The security checks no longer live in `findOrCreate`; they run before it and cannot be overridden.
