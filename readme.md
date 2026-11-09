@@ -101,7 +101,7 @@ Event::listen(GoogleUserRegistered::class, function (GoogleUserRegistered $event
 ```
 
 #### Laravel Boost skill
-The package ships a [Laravel Boost](https://laravel.com/docs/boost) skill, `google-authenticate-upgrade`, that walks an agent through upgrading a 3.x/4.x project to 5.0. Boost discovers it from `resources/boost/skills` of your installed packages: run `php artisan boost:install` (first time) or `php artisan boost:update` (after updating this package), select the skill, then ask your agent to upgrade Google Authenticate. Boost is not a dependency of this package.
+The package ships a [Laravel Boost](https://laravel.com/docs/boost) skill, `google-authenticate-upgrade`, that walks an agent through upgrading a 3.x/4.x project to 5.0. Boost discovers it from `resources/boost/skills` of your installed packages: run `php artisan boost:install` (first time) or `php artisan boost:update` (after updating this package), select the skill, then ask your agent to upgrade Google Authenticate. The skill also audits role/super-admin grants, `HasPanelShield`, self-service account deletion and seeders. Boost only offers skills of direct composer requirements. Boost is not a dependency of this package.
 
 #### Remember me
 Logins are not remembered by default. Set `'remember' => true` in the config to issue a remember-me cookie.

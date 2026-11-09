@@ -12,7 +12,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 - Added the `Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered` event (`$user`, `$googleUser`, `$hostedDomain`), dispatched after a new user row was created by a fully verified Google login, before the login. Not dispatched when linking or on later logins; a throwing listener aborts the login
 - `findOrCreate` and the `GoogleUserRegistered` dispatch now run in one database transaction: a throwing listener rolls back the new user, so the next login registers it again instead of leaving an orphan
 - All security checks (verified email, domain allow/disable, `hd`) now run in a private method before `findOrCreate`, so overriding `findOrCreate` / `createUser` cannot skip them
-- Added a Laravel Boost skill (`google-authenticate-upgrade`) that guides an agent through the 3.x/4.x to 5.0 upgrade
+- Added a Laravel Boost skill (`google-authenticate-upgrade`) that guides an agent through the 3.x/4.x to 5.0 upgrade and checks the hardening around super admin grants (listener on `GoogleUserRegistered`, `HasPanelShield`, self-service account deletion, empty `domains.allowed`, seeders, remember tokens)
 - `findOrCreate` and `createUser` are now `protected` so they can be overridden
 
 ## Version 4.6.3

@@ -15,6 +15,7 @@ Using Laravel Boost? After `composer update`, run `php artisan boost:update` and
 4. **Unverified emails** are refused everywhere, and with `domains.allowed` set the `hd` claim must match too.
 5. **Overrides.** If you override `createUser`, the signature is now `createUser(array $userData, AbstractUser $googleUser): User`. The security checks no longer live in `findOrCreate`; they run before it and cannot be overridden.
 6. **New event.** Listen to `Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered` (`$user`, `$googleUser`, `$hostedDomain`) to act on freshly registered users, e.g. to assign a role. It only fires after every check passed, only for newly created rows, and before the login. Throw to abort the login.
+7. **Harden super admin grants.** Grant privileged roles only in a `GoogleUserRegistered` listener that requires both the email domain and `$event->hostedDomain` to be in a non-empty `domains.allowed`. Never from a model event, the `provider` column or an email domain alone (users created in a panel, seeders or factories would qualify). Also review `HasPanelShield` (auto-assigns `panel_user` to every new user), self-service account deletion (a deleted user is re-created and re-granted on the next Google login) and seeders with default passwords. The Boost skill checks all of this.
 
 ---
 ## How to upgrade from v4.0.0 to v4.1.0
