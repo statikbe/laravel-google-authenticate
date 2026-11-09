@@ -25,6 +25,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Remember me
+    |--------------------------------------------------------------------------
+    |
+    | Set to true to issue a long-lived remember-me cookie after a Google login
+    |
+    */
+    'remember' => false,
+
+    /*
+    |--------------------------------------------------------------------------
     | Column Names
     |--------------------------------------------------------------------------
     |
@@ -63,6 +73,8 @@ return [
    | If any domain can log in using google you can leave this array empty.
    | If only certain domains can log in using google
    |   you can add them to the 'allowed' array.
+   | When 'allowed' is set, the Google account must also belong to one of those
+   |   Workspace domains (the 'hd' claim), so personal accounts are refused.
    | If some domains are not allowed to log in using google
    |   you can add them to the 'disabled' array.
    |

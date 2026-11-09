@@ -1,13 +1,14 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Statikbe\GoogleAuthenticate\Tests\Support\User;
 
-function googleReturns(string $email, bool $verified = true, string $id = 'google-123'): void
+function googleReturns(string $email, bool $verified = true, string $id = 'google-123', ?string $hd = 'statik.be'): void
 {
     $googleUser = (new SocialiteUser)
-        ->setRaw(['name' => 'Jan', 'email' => $email, 'email_verified' => $verified])
+        ->setRaw(array_filter(['name' => 'Jan', 'email' => $email, 'email_verified' => $verified, 'hd' => $hd], fn ($v) => $v !== null))
         ->map(['id' => $id, 'name' => 'Jan', 'email' => $email]);
 
     Socialite::shouldReceive('driver->user')->andReturn($googleUser);
@@ -150,7 +151,7 @@ it('rejects a different google id for a linked email when registration is enable
     expect(User::count())->toBe(1);
 });
 
-it('handles a google payload without given_name, family_name and email_verified', function () {
+it('handles a google payload without given_name and family_name', function () {
     config([
         'google-authenticate.user_columns' => [
             'name' => ['name'],
@@ -159,6 +160,15 @@ it('handles a google payload without given_name, family_name and email_verified'
             'email_verified_at' => ['email_verified'],
         ],
     ]);
+    googleReturns('jan@statik.be');
+
+    callback();
+
+    $this->assertAuthenticated();
+    expect(User::where('email', 'jan@statik.be')->first())->first_name->toBe('');
+});
+
+it('refuses a payload without email_verified', function () {
     $googleUser = (new SocialiteUser)
         ->setRaw(['name' => 'Jan', 'email' => 'jan@statik.be'])
         ->map(['id' => 'google-123', 'name' => 'Jan', 'email' => 'jan@statik.be']);
@@ -166,6 +176,68 @@ it('handles a google payload without given_name, family_name and email_verified'
 
     callback();
 
+    $this->assertGuest();
+    expect(User::count())->toBe(0);
+});
+
+it('refuses an unverified email without creating a user', function () {
+    googleReturns('jan@statik.be', verified: false);
+
+    callback();
+
+    $this->assertGuest();
+    expect(User::count())->toBe(0);
+});
+
+it('refuses a missing hd when allowed domains are set', function () {
+    config(['google-authenticate.domains' => ['allowed' => ['statik.be']]]);
+    googleReturns('jan@statik.be', hd: null);
+
+    callback();
+
+    $this->assertGuest();
+    expect(User::count())->toBe(0);
+});
+
+it('refuses a non-matching hd when allowed domains are set', function () {
+    config(['google-authenticate.domains' => ['allowed' => ['statik.be']]]);
+    googleReturns('jan@statik.be', hd: 'evil.com');
+
+    callback();
+
+    $this->assertGuest();
+});
+
+it('accepts a matching hd case-insensitively when allowed domains are set', function () {
+    config(['google-authenticate.domains' => ['allowed' => ['statik.be']]]);
+    googleReturns('jan@statik.be', hd: 'STATIK.be');
+
+    callback();
+
     $this->assertAuthenticated();
-    expect(User::where('email', 'jan@statik.be')->first())->first_name->toBe('')->email_verified_at->toBeNull();
+});
+
+it('ignores hd when allowed domains are empty', function () {
+    googleReturns('jan@gmail.com', hd: null);
+
+    callback();
+
+    $this->assertAuthenticated();
+});
+
+it('does not set a remember cookie by default', function () {
+    googleReturns('jan@statik.be');
+
+    $response = callback();
+
+    $response->assertCookieMissing(Auth::guard()->getRecallerName());
+});
+
+it('sets a remember cookie when configured', function () {
+    config(['google-authenticate.remember' => true]);
+    googleReturns('jan@statik.be');
+
+    $response = callback();
+
+    $response->assertCookie(Auth::guard()->getRecallerName());
 });

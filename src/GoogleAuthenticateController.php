@@ -71,7 +71,7 @@ class GoogleAuthenticateController extends Controller
         try {
             $user = Socialite::driver('google')->user();
             $authUser = $this->findOrCreate($user, 'google');
-            Auth::login($authUser, true);
+            Auth::login($authUser, (bool) config('google-authenticate.remember', false));
             request()->session()->regenerate();
 
             return Redirect::to($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
@@ -145,14 +145,19 @@ class GoogleAuthenticateController extends Controller
      *
      * @throws GoogleAuthenticationException
      */
-    private function findOrCreate(AbstractUser $googleUser, string $provider): User
+    protected function findOrCreate(AbstractUser $googleUser, string $provider): User
     {
+        // Google returns a bool, but tolerate the string form. Checked first so no account is ever created or linked unverified.
+        if (! filter_var($googleUser->getRaw()['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            throw new GoogleAuthenticationException('E-mail not verified');
+        }
+
         if (isset($googleUser->email)) {
             // make userFillableArray
             $userData = $this->fillUserData($googleUser);
             $userData['provider'] = $provider;
             $userData['provider_id'] = $googleUser->id;
-            $emailVerified = (bool) ($googleUser->getRaw()['email_verified'] ?? false);
+            $emailVerified = true;
 
             // get user's mail domain
             $emailParts = explode('@', $googleUser->email);
@@ -168,6 +173,11 @@ class GoogleAuthenticateController extends Controller
             if (in_array($emailDomain, $disabled, true)
                 || ($allowed && ! in_array($emailDomain, $allowed, true))) {
                 throw new GoogleAuthenticationException('E-mail domain not allowed');
+            }
+
+            // The hosted-domain claim is only present for Workspace accounts, so it proves org membership; an email domain alone does not.
+            if ($allowed && ! in_array(strtolower((string) ($googleUser->getRaw()['hd'] ?? '')), $allowed, true)) {
+                throw new GoogleAuthenticationException('Hosted domain not allowed');
             }
 
             if ($this->registerEnabled) {
@@ -222,7 +232,7 @@ class GoogleAuthenticateController extends Controller
      *
      * @throws GoogleAuthenticationException
      */
-    private function createUser(array $userData, bool $emailVerified): User
+    protected function createUser(array $userData, bool $emailVerified): User
     {
 
         // Extract email_verified_at before mass update to handle it separately

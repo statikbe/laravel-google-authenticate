@@ -2,6 +2,12 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 5.0.0
+- **Breaking:** Google accounts with an unverified email are refused for every login and registration (previously only when linking)
+- **Breaking:** when `domains.allowed` is set, the Google `hd` (Workspace hosted domain) claim must also match; personal accounts are refused
+- **Breaking:** login no longer sets a remember-me cookie by default; use the new `remember` config option to restore it
+- `findOrCreate` and `createUser` are now `protected` so they can be overridden
+
 ## Version 4.6.3
 - Fixed existing users being rejected when `allowed` domains are set and registration is disabled
 - Register-disabled logins now require a verified Google email and are bound to the stored `provider_id`

@@ -74,6 +74,8 @@ You can change the email domains that can login using Google. The three availabl
 - `disabled`-array: domains in this array can not login using Google
 - Empty / null: all domains can use the Google login
 
+When `allowed` is set, the Google account must also carry a matching hosted domain (`hd` claim). Only Google Workspace accounts have one, so personal Gmail accounts are refused even with an allowed email domain. Google accounts with an unverified email are always refused.
+
 The domain rules apply to existing users too, not only to new registrations. When `register_enabled` is `false`, only existing users can log in, and only with a verified Google email.
 
 ``` php
@@ -84,6 +86,9 @@ The domain rules apply to existing users too, not only to new registrations. Whe
 ```
 
 You can add an extra middleware on the auth logins by adding them in the `google-authenticate.php` config file.
+#### Remember me
+Logins are not remembered by default. Set `'remember' => true` in the config to issue a remember-me cookie.
+
 #### Custom middlewares
 ``` php
     'middleware' => [
