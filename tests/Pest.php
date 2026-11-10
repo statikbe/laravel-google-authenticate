@@ -1,3 +1,5 @@
 <?php
 
-uses(Statikbe\GoogleAuthenticate\Tests\TestCase::class)->in('Feature');
+use Statikbe\GoogleAuthenticate\Tests\TestCase;
+
+uses(TestCase::class)->in('Feature');

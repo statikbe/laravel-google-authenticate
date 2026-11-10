@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Testing\TestResponse;
+use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
-use Laravel\Socialite\AbstractUser;
 use Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered;
 use Statikbe\GoogleAuthenticate\Services\GoogleAuthService;
 use Statikbe\GoogleAuthenticate\Tests\Support\User;
@@ -23,12 +24,12 @@ function existingUser(string $email = 'jan@statik.be', ?string $providerId = nul
     return User::forceCreate(['name' => 'Jan', 'email' => $email, 'provider_id' => $providerId]);
 }
 
-function callback(): Illuminate\Testing\TestResponse
+function callback(): TestResponse
 {
     return test()->get(route('google.auth.callback'));
 }
 
-function rejected(Illuminate\Testing\TestResponse $response): void
+function rejected(TestResponse $response): void
 {
     $response->assertRedirect('/')->assertSessionHas('danger', __('google-authenticate::messages.unauthenticated'));
 }
@@ -417,9 +418,9 @@ it('refuses the string "false" for email_verified', function () {
 it('cannot bypass the checks by overriding findOrCreate', function () {
     $this->app->instance(GoogleAuthService::class, new class extends GoogleAuthService
     {
-        protected function findOrCreate(AbstractUser $googleUser, string $provider): \App\Models\User
+        protected function findOrCreate(AbstractUser $googleUser, string $provider): App\Models\User
         {
-            return \App\Models\User::forceCreate(['name' => 'x', 'email' => $googleUser->email]);
+            return App\Models\User::forceCreate(['name' => 'x', 'email' => $googleUser->email]);
         }
     });
     googleReturns('jan@statik.be', verified: false);
