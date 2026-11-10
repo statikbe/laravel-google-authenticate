@@ -66,7 +66,7 @@ class GoogleAuthenticateController extends Controller
             return Redirect::to($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
         } catch (GoogleAuthenticationException) {
             return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.unauthenticated')]);
-        } catch (InvalidStateException) {
+        } catch (InvalidStateException|\Throwable) {
             return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.error')]);
         }
     }

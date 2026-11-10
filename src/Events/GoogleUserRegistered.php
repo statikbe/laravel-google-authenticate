@@ -13,11 +13,11 @@ use Laravel\Socialite\AbstractUser;
  * $hostedDomain is the Google `hd` claim; an empty string when Google sent none, which is
  * only possible when no `domains.allowed` list is configured.
  */
-class GoogleUserRegistered
+readonly class GoogleUserRegistered
 {
     public function __construct(
-        public readonly Model $user,
-        public readonly AbstractUser $googleUser,
-        public readonly string $hostedDomain,
+        public Model        $user,
+        public AbstractUser $googleUser,
+        public string       $hostedDomain,
     ) {}
 }
