@@ -16,6 +16,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 - `findOrCreate` and `createUser` are now `protected` so they can be overridden
 - **Breaking:** the domain logic moved from `GoogleAuthenticateController` to `Statikbe\GoogleAuthenticate\Services\GoogleAuthService` (`GOOGLE_VALUES`, `getUserModel`, `findOrCreate`, `createUser`, ...). Subclasses of the controller that override these must extend `GoogleAuthService` instead and rebind it in a service provider. `authenticate()` is `final`, so the checks cannot be skipped
 - **Breaking:** removed the unused `'GoogleAuthenticate'` container binding (it returned a controller instance)
+- **Breaking:** `GoogleAuthenticateController::handleProviderCallback()` now takes the service by method injection: `handleProviderCallback(GoogleAuthService $service): RedirectResponse`. Subclasses overriding it must match the signature
 
 ## Version 4.6.3
 - Fixed existing users being rejected when `allowed` domains are set and registration is disabled

@@ -24,7 +24,7 @@ Goal (owner requirement): only people of the organisation (email domain AND Goog
 - [ ] 6 `domains.allowed` boot guard
 - [ ] 7 Advisory: password / email change by Google users (report, do not change)
 - [ ] 8 Seeders and factories safe outside local/testing
-- [ ] 9 Overrides, linking, nullable `password`
+- [ ] 9 Overrides (`handleProviderCallback`, `GOOGLE_VALUES`, removed binding), linking, nullable `password`
 - [ ] 10 Remember tokens cleared (user-run)
 - [ ] 11 Tests, including once with `APP_RUNNING_IN_CONSOLE=false`
 - [ ] 12 Final verification
@@ -33,7 +33,39 @@ Goal (owner requirement): only people of the organisation (email domain AND Goog
 
 - `composer show statikbe/laravel-google-authenticate`; read the constraint in `composer.json`. Already 5.x: only verify steps 3-8.
 - Read `config/google-authenticate.php`. A legacy `config/google-auth.php` (3.x, keys like `auth_role_domain`) means the 3.x to 4 steps in the package `upgrade-guide.md` come first. Note `domains.allowed`, `domains.disabled`, `register_enabled`, `user_columns`, `middleware`. A published copy may lack `remember`/`register_enabled`; package defaults are `false` / `true`.
-- Which login code runs? `grep -rnE "Socialite::driver|GoogleAuthenticateController|GoogleAuthService|google\.auth|login/google" app routes bootstrap config`. If the app has its own Google controller (own callback/`findUser`), the 5.0 checks do NOT protect it. Either point the routes at the package controller (preferred), or re-implement in the app controller: refuse unless `email_verified` is true; email domain in `allowed` and not in `disabled`; with `allowed` set the lowercase `hd` claim must be in it; link an existing row only when `hd` equals the email domain or the email is gmail.com/googlemail.com, then set `password` to null and rotate `remember_token`; `Auth::login($user, false)`; grant roles only for a new row after those checks.
+- Which login code runs? `grep -rnE "Socialite::driver|GoogleAuthenticateController|GoogleAuthService|google\.auth|login/google|['\"]GoogleAuthenticate['\"]|GOOGLE_VALUES|handleProviderCallback|getUserModel" app routes bootstrap config`. The `'GoogleAuthenticate'` hits are the removed container binding (`app('GoogleAuthenticate')`, `resolve(...)`, facades/aliases pointing to it, see step 9). If the app has its own Google controller (own callback/`findUser`), the 5.0 checks do NOT protect it. Preferred order:
+  1. Point the routes at the package controller.
+  2. Otherwise keep the app controller but delegate to the service, and delete the app's own copies of the domain/`hd`/verified/linking logic:
+
+     ```php
+     use Illuminate\Support\Facades\Auth;
+     use Laravel\Socialite\Facades\Socialite;
+     use Laravel\Socialite\Two\InvalidStateException;
+     use Statikbe\GoogleAuthenticate\Exceptions\GoogleAuthenticationException;
+     use Statikbe\GoogleAuthenticate\Services\GoogleAuthService;
+
+     public function callback(GoogleAuthService $service)
+     {
+         if (request()->has('error')) {
+             return redirect('/')->with('danger', __('google-authenticate::messages.error'));
+         }
+
+         try {
+             $user = $service->authenticate(Socialite::driver('google')->user());
+
+             Auth::login($user, (bool) config('google-authenticate.remember', false));
+             request()->session()->regenerate();
+
+             return redirect()->intended(config('google-authenticate.redirect_url'));
+         } catch (GoogleAuthenticationException) {
+             return redirect('/')->with('danger', __('google-authenticate::messages.unauthenticated'));
+         } catch (InvalidStateException) {
+             return redirect('/')->with('danger', __('google-authenticate::messages.error'));
+         }
+     }
+     ```
+
+  3. Last resort, re-implement by hand in the app controller: refuse unless `email_verified` is true; email domain in `allowed` and not in `disabled`; with `allowed` set the lowercase `hd` claim must be in it; link an existing row only when `hd` equals the email domain or the email is gmail.com/googlemail.com, then set `password` to null and rotate `remember_token`; `Auth::login($user, false)`; grant roles only for a new row after those checks. Prefer 1 or 2: hand-copied checks drift.
 - Search `app database routes bootstrap config tests` for: `HasGoogleAuth`, `findOrCreate`, `createUser`, `provider`, `provider_id`, `hd`, `assignRole`, `syncRoles`, `super.?admin`, `HasPanelShield`, `shouldShowDeleteAccountForm`, `Registered::class`.
 
 ## 2. Bump and config
@@ -111,7 +143,10 @@ Report to the user, do not change code. A Google-provisioned row (`provider_id` 
 
 ## 9. Overrides and linking
 
-- `grep -rn "extends GoogleAuthenticateController" app`. The domain logic moved to `Statikbe\GoogleAuthenticate\Services\GoogleAuthService`: move overrides there (`class MyService extends GoogleAuthService`) and rebind in a service provider (`$this->app->bind(GoogleAuthService::class, MyService::class)`). `createUser` is now `protected function createUser(array $userData, AbstractUser $googleUser): User` (was `createUser(array $userData, bool $emailVerified)`); `findOrCreate` is protected and overridable. Security checks run before `findOrCreate` in the private method behind the `final` `authenticate()`: delete copies, never bypass. Set `provider`/`provider_id` with `forceFill`, never from request data.
+- `grep -rn "extends GoogleAuthenticateController" app`. Subclasses that only change `$redirectTo`/middleware can stay on the controller. The domain logic moved to `Statikbe\GoogleAuthenticate\Services\GoogleAuthService`: move overrides there (`class MyService extends GoogleAuthService`) and rebind in a service provider (`$this->app->bind(GoogleAuthService::class, MyService::class)`). `createUser` is now `protected function createUser(array $userData, AbstractUser $googleUser): User` (was `createUser(array $userData, bool $emailVerified)`); `findOrCreate` is protected and overridable. Security checks run before `findOrCreate` in the private method behind the `final` `authenticate()`: delete copies, never bypass. Set `provider`/`provider_id` with `forceFill`, never from request data.
+- A subclass overriding `handleProviderCallback()` must match the new signature `handleProviderCallback(GoogleAuthService $service): RedirectResponse` or PHP fatals on load. Better: drop the override and delegate to `authenticate()` (step 1).
+- `GoogleAuthenticateController::GOOGLE_VALUES` is now `GoogleAuthService::GOOGLE_VALUES`; `getUserModel()` lives on the service.
+- The `'GoogleAuthenticate'` container binding (and `provides()`) is removed. Replace `app('GoogleAuthenticate')` / `resolve('GoogleAuthenticate')` / aliases with `app(GoogleAuthService::class)`, or the controller class directly.
 - `HasGoogleAuth` is unchanged: `provider`/`provider_id` stay fillable. Never grant anything from them.
 - Linking: an existing row matched by email is linked only when `hd` equals the email domain or the email is gmail.com/googlemail.com; otherwise refused. Linking sets `password` to `null` and rotates `remember_token`. Verify `users.password` is nullable (the package migration stub makes it so); if NOT NULL, linking fails with a database error. Tell the user about these rules.
 
@@ -133,6 +168,8 @@ Use the real callback route with a mocked Socialite user: see `vendor/statikbe/l
 - a row with `provider => 'google'` mass-assigned gets no role;
 - unverified email refused; `allowed` empty grants no role.
 
+If the app keeps its own Google controller, call the service directly instead: see `vendor/statikbe/laravel-google-authenticate/tests/Feature/GoogleAuthServiceTest.php` (`app(GoogleAuthService::class)->authenticate($socialiteUser)`, expects `GoogleAuthenticationException` on refusal).
+
 Run the project suite with its own runner (e.g. `ddev exec ./vendor/bin/pest`). Run the grant tests once more with `APP_RUNNING_IN_CONSOLE=false` to cover web-runtime-only hooks (step 4).
 
 ## 12. Verify
@@ -140,6 +177,7 @@ Run the project suite with its own runner (e.g. `ddev exec ./vendor/bin/pest`). 
 - `composer show statikbe/laravel-google-authenticate` reports 5.x.
 - Config has `remember` and a non-empty lowercase `domains.allowed`; step 6 guard present.
 - Step 3 grep finds no role grant on model events, on `provider`, or on an email domain alone; the only super-admin grant is the `GoogleUserRegistered` listener.
+- No reference to the removed `'GoogleAuthenticate'` binding or `GoogleAuthenticateController::GOOGLE_VALUES` remains; no hand-copied checks left in an app Google controller (it calls `GoogleAuthService::authenticate()`); any `handleProviderCallback` override has the new signature.
 - `HasPanelShield` (4), self-delete (5), seeders (8) fixed or reported.
 - Tests pass, normal run and with `APP_RUNNING_IN_CONSOLE=false`.
 - Tell the user: step 7 advisories, the step 10 command, and ask for a manual login in a non-production environment with an allowed Workspace account and a non-allowed one (must be refused).
