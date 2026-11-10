@@ -6,7 +6,7 @@ use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Laravel\Socialite\AbstractUser;
 use Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered;
-use Statikbe\GoogleAuthenticate\GoogleAuthenticateController;
+use Statikbe\GoogleAuthenticate\Services\GoogleAuthService;
 use Statikbe\GoogleAuthenticate\Tests\Support\User;
 
 function googleReturns(string $email, bool|string $verified = true, string $id = 'google-123', ?string $hd = 'statik.be'): void
@@ -415,7 +415,7 @@ it('refuses the string "false" for email_verified', function () {
 });
 
 it('cannot bypass the checks by overriding findOrCreate', function () {
-    $this->app->instance(GoogleAuthenticateController::class, new class extends GoogleAuthenticateController
+    $this->app->instance(GoogleAuthService::class, new class extends GoogleAuthService
     {
         protected function findOrCreate(AbstractUser $googleUser, string $provider): \App\Models\User
         {

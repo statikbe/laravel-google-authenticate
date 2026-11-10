@@ -14,6 +14,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 - All security checks (verified email, domain allow/disable, `hd`) now run in a private method before `findOrCreate`, so overriding `findOrCreate` / `createUser` cannot skip them
 - Added a Laravel Boost skill (`google-authenticate-upgrade`) that guides an agent through the 3.x/4.x to 5.0 upgrade and checks the hardening around super admin grants (listener on `GoogleUserRegistered`, `HasPanelShield`, self-service account deletion, empty `domains.allowed`, seeders, remember tokens)
 - `findOrCreate` and `createUser` are now `protected` so they can be overridden
+- **Breaking:** the domain logic moved from `GoogleAuthenticateController` to `Statikbe\GoogleAuthenticate\Services\GoogleAuthService` (`GOOGLE_VALUES`, `getUserModel`, `findOrCreate`, `createUser`, ...). Subclasses of the controller that override these must extend `GoogleAuthService` instead and rebind it in a service provider. `authenticate()` is `final`, so the checks cannot be skipped
 
 ## Version 4.6.3
 - Fixed existing users being rejected when `allowed` domains are set and registration is disabled
