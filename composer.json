@@ -22,7 +22,8 @@
     },
     "require-dev": {
         "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
-        "pestphp/pest": "^2.34|^3.0|^4.0"
+        "pestphp/pest": "^2.34|^3.0|^4.0",
+        "laravel/pint": "^1.32"
     },
     "suggest": {
         "doctrine/dbal": "If you are using the provided migration you will need doctrine/dbal. You won't need this in Laravel versions >= 11"
@@ -38,7 +39,9 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/pest"
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint",
+        "lint": "vendor/bin/pint --test"
     },
     "config": {
         "allow-plugins": {

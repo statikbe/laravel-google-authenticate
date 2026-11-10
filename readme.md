@@ -37,7 +37,7 @@ php artisan migrate
 ``` 
 
 Add the ```use HasGoogleAuth``` trait in your ```User.php``` class.
-This will provide the necessary fillable options to your User.
+`HasGoogleAuth` makes `provider` and `provider_id` mass-assignable. Because of that, never grant roles or privileges based on the `provider` column: use the `GoogleUserRegistered` event (see below), which only fires after all login checks passed.
 
 In your .env file you should include the following keys:
 ``` php
@@ -74,6 +74,8 @@ You can change the email domains that can login using Google. The three availabl
 - `disabled`-array: domains in this array can not login using Google
 - Empty / null: all domains can use the Google login
 
+When `allowed` is set, the Google account must also carry a matching hosted domain (`hd` claim). Only Google Workspace accounts have one, so personal Gmail accounts are refused even with an allowed email domain. Google accounts with an unverified email are always refused.
+
 The domain rules apply to existing users too, not only to new registrations. When `register_enabled` is `false`, only existing users can log in, and only with a verified Google email.
 
 ``` php
@@ -84,6 +86,26 @@ The domain rules apply to existing users too, not only to new registrations. Whe
 ```
 
 You can add an extra middleware on the auth logins by adding them in the `google-authenticate.php` config file.
+#### Linking existing users
+A user row that already exists with the same email, but without a Google account, is linked on first Google login only when the Google `hd` claim equals the email domain, or the email is on `gmail.com` / `googlemail.com`. Otherwise the login is refused. When linked, the row's `password` is set to `null` (if the column exists) and its `remember_token` is rotated, so credentials set before the link stop working.
+
+#### Events
+`Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered` is dispatched when a brand-new user row was created by a Google login that passed every check (verified email, domain rules, `hd`). It carries `$user` (the model), `$googleUser` (the Socialite user) and `$hostedDomain` (the `hd` claim, lowercased; empty when none was sent and no `allowed` list is set). It fires before the login, never when linking an existing row or on later logins. If a listener throws, the login fails. Use it to grant roles, never model events or mass-assigned columns:
+
+``` php
+Event::listen(GoogleUserRegistered::class, function (GoogleUserRegistered $event) {
+    if ($event->hostedDomain === 'statik.be') {
+        $event->user->assignRole('super-admin');
+    }
+});
+```
+
+#### Laravel Boost skill
+The package ships a [Laravel Boost](https://laravel.com/docs/boost) skill, `google-authenticate-upgrade`, that walks an agent through upgrading a 3.x/4.x project to 5.0. Boost discovers it from `resources/boost/skills` of your installed packages: run `php artisan boost:install` (first time) or `php artisan boost:update` (after updating this package), select the skill, then ask your agent to upgrade Google Authenticate. The skill also audits role/super-admin grants, `HasPanelShield`, self-service account deletion and seeders. Boost only offers skills of direct composer requirements. Boost is not a dependency of this package.
+
+#### Remember me
+Logins are not remembered by default. Set `'remember' => true` in the config to issue a remember-me cookie.
+
 #### Custom middlewares
 ``` php
     'middleware' => [

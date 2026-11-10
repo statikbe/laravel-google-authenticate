@@ -2,16 +2,14 @@
 
 namespace Statikbe\GoogleAuthenticate;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
 use Statikbe\GoogleAuthenticate\Exceptions\GoogleAuthenticationException;
+use Statikbe\GoogleAuthenticate\Services\GoogleAuthService;
 
 class GoogleAuthenticateController extends Controller
 {
@@ -28,14 +26,6 @@ class GoogleAuthenticateController extends Controller
 
     protected ?string $redirectTo = null;
 
-    const GOOGLE_VALUES = [
-        'name', 'email_verified', 'email', 'given_name', 'family_name', 'picture', 'nickname', 'locale',
-    ];
-
-    protected $userModel;
-
-    protected bool $registerEnabled = false;
-
     /**
      * Create a new controller instance.
      *
@@ -45,8 +35,6 @@ class GoogleAuthenticateController extends Controller
     {
         $this->middleware('guest')->except('logout');
         $this->redirectTo = config('google-authenticate.redirect_url');
-
-        $this->registerEnabled = (bool) config('google-authenticate.register_enabled', true);
     }
 
     /**
@@ -59,7 +47,7 @@ class GoogleAuthenticateController extends Controller
         return Socialite::driver('google')->scopes(['openid', 'profile', 'email'])->redirect();
     }
 
-    public function handleProviderCallback(): RedirectResponse
+    public function handleProviderCallback(GoogleAuthService $service): RedirectResponse
     {
         $sessionUrl = session('googleLoginUrl');
         $loginUrl = $this->sanitiseLoginUrl(is_string($sessionUrl) ? $sessionUrl : null);
@@ -69,9 +57,10 @@ class GoogleAuthenticateController extends Controller
         }
 
         try {
-            $user = Socialite::driver('google')->user();
-            $authUser = $this->findOrCreate($user, 'google');
-            Auth::login($authUser, true);
+            $googleUser = Socialite::driver('google')->user();
+            $authUser = $service->authenticate($googleUser);
+
+            Auth::login($authUser, (bool) config('google-authenticate.remember', false));
             request()->session()->regenerate();
 
             return Redirect::to($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
@@ -126,155 +115,5 @@ class GoogleAuthenticateController extends Controller
         }
 
         return '/';
-    }
-
-    public function getUserModel(): Model
-    {
-        if (! isset($this->userModel)) {
-            $userNamespace = config('auth.providers.users.model');
-            $this->userModel = new $userNamespace;
-        }
-
-        return $this->userModel;
-    }
-
-    /**
-     * If a user has registered before using social auth, return the user
-     * else, create a new user object.
-     *
-     *
-     * @throws GoogleAuthenticationException
-     */
-    private function findOrCreate(AbstractUser $googleUser, string $provider): User
-    {
-        if (isset($googleUser->email)) {
-            // make userFillableArray
-            $userData = $this->fillUserData($googleUser);
-            $userData['provider'] = $provider;
-            $userData['provider_id'] = $googleUser->id;
-            $emailVerified = (bool) ($googleUser->getRaw()['email_verified'] ?? false);
-
-            // get user's mail domain
-            $emailParts = explode('@', $googleUser->email);
-            if (count($emailParts) !== 2) {
-                throw new GoogleAuthenticationException('No e-mail domain found.');
-            }
-            $emailDomain = strtolower($emailParts[1]);
-
-            $domains = config('google-authenticate.domains', []);
-            $disabled = array_map('strtolower', $domains['disabled'] ?? []);
-            $allowed = array_map('strtolower', $domains['allowed'] ?? []);
-
-            if (in_array($emailDomain, $disabled, true)
-                || ($allowed && ! in_array($emailDomain, $allowed, true))) {
-                throw new GoogleAuthenticationException('E-mail domain not allowed');
-            }
-
-            if ($this->registerEnabled) {
-                return $this->createUser($userData, $emailVerified);
-            }
-
-            // Registration disabled: only existing users, and only with a verified Google email.
-            if (! $emailVerified) {
-                throw new GoogleAuthenticationException('E-mail not verified');
-            }
-
-            $user = $this->getUserModel()::where('provider_id', $userData['provider_id'])->first()
-                ?? $this->getUserModel()::where('email', $userData['email'])->whereNull('provider_id')->first();
-
-            if (! $user) {
-                throw new GoogleAuthenticationException('No user found.');
-            }
-
-            if (! $user->provider_id) {
-                $user->update(['provider' => $provider, 'provider_id' => $userData['provider_id']]);
-            }
-
-            return $user;
-        }
-
-        throw new GoogleAuthenticationException(__('google-authenticate::messages.unauthenticated'));
-    }
-
-    /**
-     * @return array
-     */
-    private function fillUserData(AbstractUser $user): array
-    {
-        // get user table columns
-        $columns = config('google-authenticate.user_columns', []);
-        $user = $user->getRaw();
-        $data = [];
-
-        foreach ($columns as $columnName => $values) {
-            // check for google values
-            $this->checkForGoogleData($values, $user);
-
-            // implode values and add them to the correct column
-            $data[$columnName] = implode('', $values);
-        }
-
-        return $data;
-    }
-
-    /**
-     * @return User
-     *
-     * @throws GoogleAuthenticationException
-     */
-    private function createUser(array $userData, bool $emailVerified): User
-    {
-
-        // Extract email_verified_at before mass update to handle it separately
-        $emailVerifiedAt = $userData['email_verified_at'] ?? null;
-        unset($userData['email_verified_at']);
-
-        //search for possible user with this email but without Google provider
-
-        $user = $this->getUserModel()::where('email', $userData['email'])->whereNull('provider_id')->first();
-        if ($user) {
-            if (! $emailVerified) {
-                throw new GoogleAuthenticationException('E-mail not verified');
-            }
-            $user->update($userData);
-        } else {
-            // email already linked to another Google account: never create a duplicate or take it over
-            if ($this->getUserModel()::where('email', $userData['email'])->where('provider_id', '!=', $userData['provider_id'])->exists()) {
-                throw new GoogleAuthenticationException('E-mail linked to another Google account');
-            }
-
-            // update or create user and return it
-            $user = $this->getUserModel()::updateOrCreate(['provider_id' => $userData['provider_id']], $userData);
-        }
-
-        //verify user - only set if not already verified
-        if (!$user->email_verified_at && $emailVerifiedAt) {
-            $user->email_verified_at = $emailVerifiedAt;
-
-            $user->save();
-        }
-
-        return $user;
-    }
-
-    /**
-     * @param array $user
-     */
-    private function checkForGoogleData(array &$values, array $user): void
-    {
-        // loop values provided from config
-        foreach ($values as $key => $value) {
-            // if email_verified make sure it returns a datetime
-            if ($value === 'email_verified') {
-                $values[$key] = ($user[$value] ?? false) ? now()->toDateTimeString() : null;
-
-                continue;
-            }
-
-            // if value found in google_values array, return it's google value
-            if (in_array($value, self::GOOGLE_VALUES, true)) {
-                $values[$key] = $user[$value] ?? null;
-            }
-        }
     }
 }

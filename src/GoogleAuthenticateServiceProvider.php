@@ -36,19 +36,6 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/config/google-authenticate.php', 'google-authenticate'
         );
-
-        // Register the service the package provides.
-        $this->app->singleton('GoogleAuthenticate', function ($app) {
-            return new GoogleAuthenticateController;
-        });
-    }
-
-    /**
-     * Get the services provided by the provider.
-     */
-    public function provides(): array
-    {
-        return ['GoogleAuthenticate'];
     }
 
     /**

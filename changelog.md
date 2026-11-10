@@ -2,6 +2,22 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 5.0.0
+- **Breaking:** Google accounts with an unverified email are refused for every login and registration (previously only when linking)
+- **Breaking:** when `domains.allowed` is set, the Google `hd` (Workspace hosted domain) claim must also match; personal accounts are refused
+- **Breaking:** login no longer sets a remember-me cookie by default; use the new `remember` config option to restore it
+- **Breaking:** an existing row that matches by email is only linked to a Google account when the `hd` claim equals the email domain, or the email domain is `gmail.com` / `googlemail.com`; otherwise the login is refused
+- **Breaking:** linking an existing row sets `password` to `null` (when the column exists) and rotates `remember_token`
+- **Breaking:** `createUser(array $userData, bool $emailVerified)` is now `createUser(array $userData, AbstractUser $googleUser)`; the unreachable `$emailVerified` flag is gone
+- Added the `Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered` event (`$user`, `$googleUser`, `$hostedDomain`), dispatched after a new user row was created by a fully verified Google login, before the login. Not dispatched when linking or on later logins; a throwing listener aborts the login
+- `findOrCreate` and the `GoogleUserRegistered` dispatch now run in one database transaction: a throwing listener rolls back the new user, so the next login registers it again instead of leaving an orphan
+- All security checks (verified email, domain allow/disable, `hd`) now run in a private method before `findOrCreate`, so overriding `findOrCreate` / `createUser` cannot skip them
+- Added a Laravel Boost skill (`google-authenticate-upgrade`) that guides an agent through the 3.x/4.x to 5.0 upgrade and checks the hardening around super admin grants (listener on `GoogleUserRegistered`, `HasPanelShield`, self-service account deletion, empty `domains.allowed`, seeders, remember tokens)
+- `findOrCreate` and `createUser` are now `protected` so they can be overridden
+- **Breaking:** the domain logic moved from `GoogleAuthenticateController` to `Statikbe\GoogleAuthenticate\Services\GoogleAuthService` (`GOOGLE_VALUES`, `getUserModel`, `findOrCreate`, `createUser`, ...). Subclasses of the controller that override these must extend `GoogleAuthService` instead and rebind it in a service provider. `authenticate()` is `final`, so the checks cannot be skipped
+- **Breaking:** removed the unused `'GoogleAuthenticate'` container binding (it returned a controller instance)
+- **Breaking:** `GoogleAuthenticateController::handleProviderCallback()` now takes the service by method injection: `handleProviderCallback(GoogleAuthService $service): RedirectResponse`. Subclasses overriding it must match the signature
+
 ## Version 4.6.3
 - Fixed existing users being rejected when `allowed` domains are set and registration is disabled
 - Register-disabled logins now require a verified Google email and are bound to the stored `provider_id`
