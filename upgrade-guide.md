@@ -3,6 +3,77 @@
 Using Laravel Boost? After `composer update`, run `php artisan boost:update` and ask your agent to use the `google-authenticate-upgrade` skill.
 
 ---
+## How to upgrade from v5.x to v6.0.0
+
+Using Boost? The `google-authenticate-upgrade` skill does most of this for you.
+
+6.0 removes the code a project had to write itself. After the upgrade, a project has no Google-auth code left, except an optional custom listener. The route names `google.auth.login` and `google.auth.callback` are unchanged, so your login buttons keep working.
+
+Update `composer.json` to `"statikbe/laravel-google-authenticate": "^6.0"`, then go through the list.
+
+### Breaking changes
+
+1. **`HasGoogleAuth` trait removed.** Delete `use HasGoogleAuth` (and its import) from your `User` model. Nothing replaces it: the service sets `provider` and `provider_id` with `forceFill`. Also remove `provider` and `provider_id` from `$fillable` if you added them.
+2. **`spatie/laravel-permission` is optional.** The package only suggests it (`^6.0|^7.0`). Without it, login works and no role is granted. Install it yourself when you want the super admin role.
+3. **The listener `GrantSuperAdminRole` is on by default.** It grants the role `super_admin` (`GOOGLE_AUTH_SUPER_ADMIN_ROLE`) to new users whose email domain and `hd` claim are both in `domains.allowed`. Use another role name through the env var. To turn the listener off, publish the config and set the listener to `null`:
+   ``` shell
+   php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="google-config"
+   ```
+   ``` php
+   'super_admin_listener' => null,
+   ```
+   There is no env var for the listener. If you have a project listener that grants the same role (for example `GrantSuperAdminToOrganisation`), delete it, or set the listener to `null` and keep yours. Its inline domain check can become `$event->isFromAllowedDomain()`. Never run two listeners that grant different roles.
+4. **An empty `domains.allowed` refuses new users.** Set `GOOGLE_AUTH_ALLOWED_DOMAINS` (comma separated). For a public app that accepts every Google account, set `GOOGLE_AUTH_ALLOW_ANY_DOMAIN=true`. Existing users still log in. Remove the 5.0 guard from `AppServiceProvider::boot()`: the package now checks this at login, so it no longer breaks artisan commands.
+5. **Missing `HasRoles`, or spatie teams on.** When spatie is installed and the `User` model lacks `Spatie\Permission\Traits\HasRoles`, a new Google login fails with a `LogicException` and the new row is rolled back. Add the trait. When `permission.teams` is on, the default listener grants nothing and the login goes on. The package does not support teams: write a custom listener (see the readme).
+6. **Laravel 10 is dropped.** The package needs Laravel `^11|^12|^13` and PHP `^8.2`. Laravel 10 projects stay on 5.x.
+7. **Classes moved.** Update imports and routes:
+   - `Statikbe\GoogleAuthenticate\Services\GoogleAuthService` is now `Statikbe\GoogleAuthenticate\GoogleAuthService`.
+   - `Statikbe\GoogleAuthenticate\GoogleAuthenticateController` is now `Statikbe\GoogleAuthenticate\Http\GoogleAuthController`.
+8. **`findOrCreate` and `createUser` are merged.** Subclasses that override them break. Move that logic into a listener on `GoogleUserRegistered`. Column mapping belongs in `user_columns`. Delete subclasses of the service or controller, and their container bindings.
+9. **The package registers a `Gate::before`.** A user with the super admin role passes every ability, also policies that deny. The role is checked under the user model's own guard, so a role with the same name under another guard does not count. This is the case even when Filament Shield uses `intercept_gate => 'after'`. A project `Gate::before` that only checks this role can go. Set `GOOGLE_AUTH_SUPER_ADMIN_GATE=false` to keep the role limited to its assigned permissions.
+10. **Views and the `google-views` publish tag are removed.** The views were never rendered. Delete `resources/views/vendor/google-authenticate`. Publishing `google-lang` and `google-config` still works.
+11. **Routes get the `guest` middleware.** A logged-in user who opens `google.auth.login` is redirected instead of sent to Google.
+12. **A successful login uses `redirect()->intended(redirect_url)`.** A user sent to login from a protected page lands back there. Otherwise the `redirect_url` config applies. A controller subclass that only did this can be deleted.
+13. **Config moved from `src/config` to `config/`.** The keys are unchanged, so a published `config/google-authenticate.php` keeps working. New keys: `domains.allow_any`, `super_admin_role`, `super_admin_listener`, `super_admin_gate`.
+
+### Also good to know
+- **Zero config.** `services.google` now has defaults from `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, with the redirect `/login/google/callback`. Keep your own `services.google` block when its redirect or keys differ: your values win. The `CALLBACK_URL_GOOGLE` env var is no longer required: keep it if your `config/services.php` already uses it.
+- **Migration.** It loads automatically and skips columns that already exist. It also makes `users.password` nullable when it is NOT NULL (Google-only users have no password). Its `down()` does nothing, so a rollback never drops `provider` or `provider_id`. Your published 5.x migration keeps working. It also adds a unique index on `provider_id`, so a double callback cannot create two rows for one Google account. The index is skipped (the migration does not fail) when your table already has a unique index on `provider_id` or holds duplicate values. To get the index after cleaning up, find the duplicates with `select provider_id, count(*) from users where provider_id is not null group by provider_id having count(*) > 1`, delete or null the extra rows and add the index yourself with `$table->unique('provider_id')` in a migration of your own. The migration also fails with a clear message when the users table of `auth.providers.users.model` does not exist yet: run it after the migration that creates that table. You can still publish it with the tag `google-migrations`.
+- **Email change.** A linked user whose Google email changes to an email another row already has is refused (error code 403, generic login error) instead of overwriting.
+- **Facade.** `GoogleAuthenticate::isAllowedDomain($email, ?$hd)` gives policies and `canAccessPanel()` the same domain rule the package uses at login. See the readme.
+- **Other role libraries.** Extend `Statikbe\GoogleAuthenticate\Listeners\GrantSuperAdminRole`, override `assignRole()` and set your class as `super_admin_listener` in the published config.
+- **Rate limit.** Both Google routes now carry `throttle:10,1` (10 requests per minute per IP). Set `GOOGLE_AUTH_THROTTLE=` (empty) to disable it, or a value like `20,1` to change it.
+- **New event method.** `GoogleUserRegistered::isFromAllowedDomain()` replaces the domain check in custom listeners.
+- **Account link event.** `GoogleAccountLinked` fires inside the login transaction when an existing row is linked to Google. Listen to it to revoke sessions and API tokens issued before the link, and add `Illuminate\Session\Middleware\AuthenticateSession` to the `web` group to end other devices' sessions (see the readme). Never queue a listener of this event or of `GoogleUserRegistered`: the event holds the OAuth tokens.
+- **Stricter lookups.** `provider_id` is matched only on rows with `provider = google` or a NULL `provider` (older installs, imports). A row with another provider (for example `github`) is never matched by a Google id, and a Google login whose email belongs to such a row is refused. Emails are matched case-insensitively.
+- **Logging.** Refused logins write a `Log::warning` with the Google `sub` and the reason (never the email).
+
+---
+## How to upgrade from v4.x to v6.0.0
+
+Do the 4.x to 5.0 steps below first (remember tokens, linking rules, `GoogleUserRegistered`), then the 5.x to 6.0 list above.
+
+A 4.x project often grants roles in a model observer or in `User::created` (see the v3 to v4 notes below). That is not safe: users created in a panel, a seeder or a factory would get the role too. Replace it with a listener on `GoogleUserRegistered`:
+
+``` php
+namespace App\Listeners;
+
+use Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered;
+
+class GrantAdminToOrganisation
+{
+    public function handle(GoogleUserRegistered $event): void
+    {
+        if ($event->isFromAllowedDomain()) {
+            $event->user->assignRole('admin');
+        }
+    }
+}
+```
+
+Delete the observer. If the role is `super_admin`, you can skip the listener: the default one grants it. Otherwise set `'super_admin_listener' => null` in the published config and keep your own listener.
+
+---
 ## How to upgrade from v4.x to v5.0.0
 
 1. **Clear existing remember tokens.** Logins are no longer remembered by default, but tokens issued earlier keep working until they are cleared:

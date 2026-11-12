@@ -3,13 +3,10 @@
 namespace Statikbe\GoogleAuthenticate\Tests\Support;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Statikbe\GoogleAuthenticate\Traits\HasGoogleAuth;
 
 class User extends Authenticatable
 {
-    use HasGoogleAuth;
-
     protected $table = 'users';
 
-    protected $fillable = ['name', 'first_name', 'email', 'email_verified_at', 'password'];
+    protected $fillable = ['name', 'first_name', 'email', 'email_verified_at', 'password', 'provider', 'provider_id'];
 }

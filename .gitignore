@@ -4,3 +4,4 @@
 package-lock.json
 composer.lock
 .phpunit.cache
+.claude/worktrees/

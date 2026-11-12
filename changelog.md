@@ -2,6 +2,56 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 6.0.0
+
+### Added
+- Zero-config install: `services.google` defaults from `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (redirect `/login/google/callback`), merged by the package and safe with `config:cache`
+- The migration loads automatically, skips columns that already exist, makes `users.password` nullable when needed, and its `down()` does nothing
+- The migration uses the table of the configured user model, fails with a clear message when that table is missing, keeps a custom `password` column length, and adds a unique index on `provider_id` unless one exists or duplicates are present (then it skips)
+- Default listener `Statikbe\GoogleAuthenticate\Listeners\GrantSuperAdminRole`: grants the `super_admin` role to new users whose email domain and `hd` are both in `domains.allowed`. The role-library code sits in `protected assignRole()`, so a subclass can swap spatie for another library. Set the class in `super_admin_listener`, or `null` to turn it off
+- `Gate::before` for the super admin role, checked under the user model's own guard, with `GOOGLE_AUTH_SUPER_ADMIN_GATE` to turn it off
+- `GoogleAuthenticate` facade with `isAllowedDomain(string $email, ?string $hostedDomain = null)`
+- `GoogleUserRegistered::isFromAllowedDomain()`
+- Rate limit on both Google routes: config `throttle` / env `GOOGLE_AUTH_THROTTLE`, default `10,1` (10 requests per minute per IP), empty disables it
+- `Statikbe\GoogleAuthenticate\Events\GoogleAccountLinked` (`$user`, `$googleUser`), dispatched inside the login transaction whenever an existing row is linked to a Google account. Revoke old sessions and API tokens there
+- Refused logins are logged with `Log::warning` (Google `sub` and reason, never the email). The skipped super admin grant under spatie teams is logged too
+- Config keys `domains.allow_any`, `super_admin_role`, `super_admin_listener`, `super_admin_gate` and env vars `GOOGLE_AUTH_ALLOWED_DOMAINS`, `GOOGLE_AUTH_ALLOW_ANY_DOMAIN`, `GOOGLE_AUTH_SUPER_ADMIN_ROLE`, `GOOGLE_AUTH_SUPER_ADMIN_GATE`
+
+### Changed
+- Unexpected exceptions in the callback are reported with `report()`, except an invalid OAuth state (`InvalidStateException`)
+- A successful login redirects with `redirect()->intended(redirect_url)`
+- The service works with the configured user model, not `App\Models\User`
+- Config moved to `config/`, routes to `routes/web.php`. Config keys are unchanged
+- `spatie/laravel-permission` (`^6.0|^7.0`) is a suggested package, not required
+- Readme and upgrade guide rewritten for the 3-step install
+- A linked user whose Google email changes to an email another row already has is refused (error code 403, generic login error) instead of overwriting
+- `provider_id` lookups match rows with `provider = google` or a NULL `provider`, never another provider; an email owned by another provider's row is refused, and email lookups use the mapped email column, case-insensitively
+- `register_enabled` is read at call time, not once per container
+- A parallel double callback no longer fails: the service reuses the row the other request created when a unique index on `provider_id` rejects the insert
+- The empty `domains.allowed` misconfiguration is reported at most once per hour
+- `GOOGLE_AUTH_ALLOWED_DOMAINS` entries are trimmed
+- Return URLs with backslashes, control characters or user info are refused
+
+### Removed
+- The `HasGoogleAuth` trait
+- The views and the `google-views` publish tag
+- Laravel 10 support (needs Laravel `^11|^12|^13`, PHP `^8.2`)
+- `findOrCreate`, `createUser` and the `GOOGLE_VALUES` constant: one lookup flow replaces them
+
+### Breaking
+- Remove `use HasGoogleAuth` from your `User` model
+- Classes moved: `Services\GoogleAuthService` is now `GoogleAuthService`, `GoogleAuthenticateController` is now `Http\GoogleAuthController`
+- Subclasses that override `findOrCreate` or `createUser` break: use a `GoogleUserRegistered` listener
+- The default listener is on by default and grants `super_admin` to new users from allowed domains. Publish the config and set `'super_admin_listener' => null` to turn it off
+- An empty `domains.allowed` refuses new users, unless `GOOGLE_AUTH_ALLOW_ANY_DOMAIN=true`. Existing users still log in
+- With spatie installed, a `User` model without `HasRoles` makes new Google logins fail. With spatie teams on, the default listener grants nothing: use a custom listener
+- The package registers a `Gate::before`: a super admin passes every ability, also policies that deny
+- The login routes use the `guest` middleware
+- A successful login uses `redirect()->intended()`
+- Route names `google.auth.login` and `google.auth.callback` are unchanged
+
+See the [upgrade guide](upgrade-guide.md) for the action per item.
+
 ## Version 5.0.0
 - **Breaking:** Google accounts with an unverified email are refused for every login and registration (previously only when linking)
 - **Breaking:** when `domains.allowed` is set, the Google `hd` (Workspace hosted domain) claim must also match; personal accounts are refused

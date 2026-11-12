@@ -9,11 +9,6 @@ use Orchestra\Testbench\TestCase as Orchestra;
 use Statikbe\GoogleAuthenticate\GoogleAuthenticateServiceProvider;
 use Statikbe\GoogleAuthenticate\Tests\Support\User;
 
-// The controller's return type is the host app's App\Models\User, which doesn't exist in a package.
-if (! class_exists('App\Models\User')) {
-    class_alias(User::class, 'App\Models\User');
-}
-
 abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
@@ -27,6 +22,15 @@ abstract class TestCase extends Orchestra
     protected function defineEnvironment($app): void
     {
         $app['config']->set('auth.providers.users.model', User::class);
+
+        // Suite default keeps 5.x semantics (empty allow-list creates users); the D9 tests set it to false.
+        $app['config']->set('google-authenticate.domains.allow_any', true);
+
+        // Support\User has no HasRoles, so the default listener would abort every login with allowed domains. GrantSuperAdminRoleTest turns it on.
+        $app['config']->set('google-authenticate.super_admin_listener', null);
+
+        // The permission provider is not registered: only its config and tables are needed for the HasRoles fixtures.
+        $app['config']->set('permission', require $this->spatiePath('config/permission.php'));
     }
 
     protected function defineDatabaseMigrations(): void
@@ -43,5 +47,14 @@ abstract class TestCase extends Orchestra
             $table->rememberToken();
             $table->timestamps();
         });
+
+        // The stub name differs between spatie/laravel-permission versions, so match on the prefix.
+        $stubs = glob($this->spatiePath('database/migrations/create_permission_tables.php*'));
+        (require $stubs[0])->up();
+    }
+
+    private function spatiePath(string $path): string
+    {
+        return dirname(__DIR__).'/vendor/spatie/laravel-permission/'.$path;
     }
 }
