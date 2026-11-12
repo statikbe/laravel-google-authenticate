@@ -65,6 +65,7 @@ return new class extends Migration
         }
 
         $hasDuplicates = DB::table($users)
+              ->select('provider_id')
             ->whereNotNull('provider_id')
             ->groupBy('provider_id')
             ->havingRaw('count(*) > 1')

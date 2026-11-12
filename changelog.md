@@ -2,6 +2,11 @@
 
 All notable changes to `GoogleAuthenticator` will be documented in this file.
 
+## Version 6.0.2
+
+### Fixed
+- The migration's duplicate `provider_id` check selects only `provider_id`, so it no longer fails on MySQL with `only_full_group_by` (SQLSTATE 1055)
+
 ## Version 6.0.0
 
 ### Added
