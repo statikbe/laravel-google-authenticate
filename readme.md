@@ -16,7 +16,7 @@ This is initially used to let only people log in from certain workspaces. But ca
 
 ## Installation
 
-The package needs PHP `^8.2` and Laravel `^11`, `^12` or `^13`. Installing takes three steps.
+The package needs PHP `^8.2` and Laravel `^11`, `^12` or `^13`. Installing takes three steps: require, env vars, run the migration.
 
 **1. Require the package.** It registers itself.
 
@@ -39,7 +39,7 @@ found [on their documentation page](https://developers.google.com/identity/proto
 
 You do not need to edit `config/services.php`. The package fills `services.google` from these env vars, with `/login/google/callback` as redirect. When your app sets `services.google` itself, your values win key by key. `CALLBACK_URL_GOOGLE` is no longer required: keep it if your `config/services.php` already uses it.
 
-**3. Run the migration.** It adds `provider` and `provider_id` to your `users` table, and skips columns that already exist. It also makes `users.password` nullable when it is NOT NULL, because Google-only users have no password. Its `down()` does nothing: a rollback never drops `provider` or `provider_id`, since many apps created those columns themselves. It also adds a unique index on `provider_id` (no double rows from a double callback). When your table already has one, or holds duplicate `provider_id` values, the index is skipped without an error: remove the duplicate rows, then add `$table->unique('provider_id')` in a migration of your own. It uses the table of your configured user model and fails with a clear message when that table does not exist yet.
+**3. Run the migration.** It loads automatically. It adds `provider` and `provider_id` to your `users` table, and skips columns that already exist. It also makes `users.password` nullable when it is NOT NULL, because Google-only users have no password. Its `down()` does nothing: a rollback never drops `provider` or `provider_id`, since many apps created those columns themselves. It also adds a unique index on `provider_id` (no double rows from a double callback). When your table already has one, or holds duplicate `provider_id` values, the index is skipped without an error: remove the duplicate rows, then add `$table->unique('provider_id')` in a migration of your own. It uses the table of your configured user model and fails with a clear message when that table does not exist yet.
 
 ``` shell
 php artisan migrate
@@ -277,7 +277,7 @@ Event::listen(GoogleUserRegistered::class, GrantAdminToOrganisation::class);
 The package ships a [Laravel Boost](https://laravel.com/docs/boost) skill, `google-authenticate-upgrade`, that walks an agent through upgrading a 3.x, 4.x or 5.x project to 6.0 and removes the Google-auth code a project no longer needs. Boost discovers it from `resources/boost/skills` of your installed packages: run `php artisan boost:install` (first time) or `php artisan boost:update` (after updating this package), select the skill, then ask your agent to upgrade Google Authenticate. Boost only offers skills of direct composer requirements. Boost is not a dependency of this package.
 
 ## Publishing
-You can publish the config, the migration and the translations:
+You can publish the config, the migration and the translations. Publishing the migration is optional (it loads automatically); the published copy is named with today's date:
 ``` shell
 php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="google-config"
 php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider" --tag="google-migrations"

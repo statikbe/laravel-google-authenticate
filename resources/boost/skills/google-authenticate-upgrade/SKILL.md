@@ -89,11 +89,19 @@ Walk this table top to bottom. For each row: run the detection, show the hits, t
 | `services.google` block | `grep -n "'google'" config/services.php` | Step 2. |
 | Published views | `resources/views/vendor/google-authenticate` exists | Delete: never rendered. |
 | Published lang | `lang/vendor/google-authenticate` exists | Delete when identical to the package files. Keep real translations. |
-| Published 5.x migration | file in `database/migrations` | Keep: it already ran, and the package migration skips its columns. |
+| Published 5.x migration | file in `database/migrations` | Keep: it already ran. Then publish the 6.0 migration (below). |
 | Old 3.x `config/google-auth.php` | file exists | Delete after moving `auth_role_domain` to `GOOGLE_AUTH_ALLOWED_DOMAINS`. |
 | Tests of removed project code | `grep -rln "GoogleUserRegistered\|login/google" tests` | Delete tests of deleted code. Keep or adapt the tests of step 12. |
 
-Then run `php artisan migrate --pretend` and show the output. Only missing columns may appear. Anything else: STOP AND ASK.
+Publish the 6.0 migration into the project, unless `database/migrations/*_add_google_provider_to_users_table.php` already exists:
+
+```bash
+php artisan vendor:publish --tag=google-migrations
+```
+
+It gets today's date. The package also loads the same migration itself; both runs are idempotent.
+
+Then run `php artisan migrate --pretend` and show the output. Only these may appear: missing `provider` / `provider_id` columns, `users.password` made nullable, a unique index on `provider_id`. Anything else: STOP AND ASK.
 
 ## 4. Roles
 

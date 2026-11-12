@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +15,7 @@ function registerProvider(): void
 
 function migration(): object
 {
-    return require __DIR__.'/../../database/migrations/2024_01_01_000000_add_google_provider_to_users_table.php';
+    return require __DIR__.'/../../database/migrations/add_google_provider_to_users_table.php';
 }
 
 it('defaults services.google when the app sets nothing', function () {
@@ -203,11 +204,21 @@ it('publishes the migration under the google-migrations tag', function () {
     $this->artisan('vendor:publish', ['--tag' => 'google-migrations'])->assertSuccessful();
 
     $published = glob(database_path('migrations/*_add_google_provider_to_users_table.php'));
+    $loaded = require $published[0];
     array_map('unlink', $published);
 
-    expect($published)->toHaveCount(1);
+    expect($published)->toHaveCount(1)
+        ->and(basename($published[0]))->toMatch('/^\d{4}_\d{2}_\d{2}_\d{6}_add_google_provider_to_users_table\.php$/')
+        ->and($loaded)->toBeInstanceOf(Migration::class);
 });
 
 it('ships no stub migration', function () {
-    expect(glob(__DIR__.'/../../database/migrations/*.stub'))->toBe([]);
+    expect(glob(__DIR__.'/../../database/migrations/*.stub'))->toBe([])
+        ->and(__DIR__.'/../../database/migrations/add_google_provider_to_users_table.php')->toBeFile();
+});
+
+it('auto-loads the package migration', function () {
+    $dir = realpath(__DIR__.'/../../database/migrations');
+
+    expect(array_map('realpath', app('migrator')->paths()))->toContain($dir);
 });
