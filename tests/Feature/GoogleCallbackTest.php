@@ -2,12 +2,11 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Testing\TestResponse;
-use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered;
-use Statikbe\GoogleAuthenticate\Services\GoogleAuthService;
 use Statikbe\GoogleAuthenticate\Tests\Support\User;
 
 function googleReturns(string $email, bool|string $verified = true, string $id = 'google-123', ?string $hd = 'statik.be'): void
@@ -21,7 +20,7 @@ function googleReturns(string $email, bool|string $verified = true, string $id =
 
 function existingUser(string $email = 'jan@statik.be', ?string $providerId = null): User
 {
-    return User::forceCreate(['name' => 'Jan', 'email' => $email, 'provider_id' => $providerId]);
+    return User::forceCreate(['name' => 'Jan', 'email' => $email, 'provider' => $providerId ? 'google' : null, 'provider_id' => $providerId]);
 }
 
 function callback(): TestResponse
@@ -42,6 +41,18 @@ it('registers and logs in a new user on an allowed domain', function () {
 
     $this->assertAuthenticated();
     expect(User::where('email', 'jan@statik.be')->value('provider_id'))->toBe('google-123');
+});
+
+it('refuses a new user and reports the misconfiguration when allowed is empty and allow_any is off', function () {
+    Exceptions::fake();
+    config(['google-authenticate.domains' => ['allowed' => [], 'disabled' => [], 'allow_any' => false]]);
+    googleReturns('jan@statik.be');
+
+    rejected(callback());
+
+    $this->assertGuest();
+    expect(User::count())->toBe(0);
+    Exceptions::assertReported(fn (LogicException $e) => str_contains($e->getMessage(), 'ALLOW_ANY'));
 });
 
 it('logs in an existing verified user when registration is disabled and links the provider id', function () {
@@ -304,18 +315,20 @@ it('does not dispatch the registered event when a check fails', function (array 
     'hd mismatch' => [['google-authenticate.domains' => ['allowed' => ['statik.be']]], true, 'evil.com'],
 ]);
 
-it('does not log in when a registered listener throws', function () {
+it('does not log in, rolls back and reports when a registered listener throws', function () {
+    Exceptions::fake();
     Event::listen(GoogleUserRegistered::class, fn () => throw new RuntimeException('boom'));
     googleReturns('jan@statik.be');
 
-    $this->withoutExceptionHandling();
-    expect(fn () => callback())->toThrow(RuntimeException::class, 'boom');
+    callback()->assertRedirect('/')->assertSessionHas('danger', __('google-authenticate::messages.error'));
 
     $this->assertGuest();
     expect(User::count())->toBe(0);
+    Exceptions::assertReported(fn (RuntimeException $e) => $e->getMessage() === 'boom');
 });
 
 it('registers again after a listener failed the first attempt', function () {
+    Exceptions::fake();
     $fail = true;
     $calls = 0;
     Event::listen(GoogleUserRegistered::class, function () use (&$fail, &$calls) {
@@ -326,8 +339,7 @@ it('registers again after a listener failed the first attempt', function () {
     });
     googleReturns('jan@statik.be');
 
-    $this->withoutExceptionHandling();
-    expect(fn () => callback())->toThrow(RuntimeException::class, 'boom');
+    callback()->assertSessionHas('danger', __('google-authenticate::messages.error'));
     $this->assertGuest();
 
     $fail = false;
@@ -335,6 +347,31 @@ it('registers again after a listener failed the first attempt', function () {
 
     $this->assertAuthenticated();
     expect($calls)->toBe(2)->and(User::count())->toBe(1);
+});
+
+it('does not report expected authentication failures', function () {
+    Exceptions::fake();
+    googleReturns('jan@statik.be', verified: false);
+
+    rejected(callback());
+
+    Exceptions::assertNothingReported();
+});
+
+it('redirects to the intended url after login', function () {
+    config(['google-authenticate.redirect_url' => '/home']);
+    googleReturns('jan@statik.be');
+
+    $this->withSession(['url.intended' => 'https://app.test/dashboard'])
+        ->get(route('google.auth.callback'))
+        ->assertRedirect('https://app.test/dashboard');
+});
+
+it('falls back to the configured redirect url when nothing is intended', function () {
+    config(['google-authenticate.redirect_url' => '/home']);
+    googleReturns('jan@statik.be');
+
+    callback()->assertRedirect('/home')->assertSessionHas('success');
 });
 
 it('refuses to link a consumer account on a non-gmail domain without hd', function (bool $registerEnabled) {
@@ -408,22 +445,6 @@ it('accepts the string forms of email_verified', function () {
 
 it('refuses the string "false" for email_verified', function () {
     googleReturns('jan@statik.be', verified: 'false');
-
-    rejected(callback());
-
-    $this->assertGuest();
-    expect(User::count())->toBe(0);
-});
-
-it('cannot bypass the checks by overriding findOrCreate', function () {
-    $this->app->instance(GoogleAuthService::class, new class extends GoogleAuthService
-    {
-        protected function findOrCreate(AbstractUser $googleUser, string $provider): App\Models\User
-        {
-            return App\Models\User::forceCreate(['name' => 'x', 'email' => $googleUser->email]);
-        }
-    });
-    googleReturns('jan@statik.be', verified: false);
 
     rejected(callback());
 

@@ -1,42 +1,21 @@
 <?php
 
-namespace Statikbe\GoogleAuthenticate;
+namespace Statikbe\GoogleAuthenticate\Http;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\InvalidStateException;
 use Statikbe\GoogleAuthenticate\Exceptions\GoogleAuthenticationException;
-use Statikbe\GoogleAuthenticate\Services\GoogleAuthService;
+use Statikbe\GoogleAuthenticate\GoogleAuthService;
 
-class GoogleAuthenticateController extends Controller
+class GoogleAuthController extends Controller
 {
-    /*
-   |--------------------------------------------------------------------------
-   | Login Controller
-   |--------------------------------------------------------------------------
-   |
-   | This controller handles authenticating users for the application and
-   | redirecting them to your home screen. The controller uses a trait
-   | to conveniently provide its functionality to your applications.
-   |
-   */
-
-    protected ?string $redirectTo = null;
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('guest')->except('logout');
-        $this->redirectTo = config('google-authenticate.redirect_url');
-    }
-
     /**
      * Redirect the user to the Google authentication page.
      */
@@ -44,7 +23,10 @@ class GoogleAuthenticateController extends Controller
     {
         request()->session()->flash('googleLoginUrl', $this->sanitiseLoginUrl(url()->previous()));
 
-        return Socialite::driver('google')->scopes(['openid', 'profile', 'email'])->redirect();
+        /** @var AbstractProvider $driver */
+        $driver = Socialite::driver('google');
+
+        return $driver->scopes(['openid', 'profile', 'email'])->redirect();
     }
 
     public function handleProviderCallback(GoogleAuthService $service): RedirectResponse
@@ -57,16 +39,25 @@ class GoogleAuthenticateController extends Controller
         }
 
         try {
+            /** @var AbstractUser $googleUser */
             $googleUser = Socialite::driver('google')->user();
             $authUser = $service->authenticate($googleUser);
+
+            if (! $authUser instanceof Authenticatable) {
+                throw new \LogicException('The configured user model must implement '.Authenticatable::class);
+            }
 
             Auth::login($authUser, (bool) config('google-authenticate.remember', false));
             request()->session()->regenerate();
 
-            return Redirect::to($this->redirectTo)->with('success', __('google-authenticate::messages.success'));
+            return Redirect::intended((string) config('google-authenticate.redirect_url'))->with('success', __('google-authenticate::messages.success'));
         } catch (GoogleAuthenticationException) {
             return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.unauthenticated')]);
-        } catch (InvalidStateException|\Throwable) {
+        } catch (InvalidStateException) {
+            return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.error')]);
+        } catch (\Throwable $e) {
+            report($e);
+
             return Redirect::to($loginUrl)->with(['danger' => __('google-authenticate::messages.error')]);
         }
     }
@@ -81,8 +72,14 @@ class GoogleAuthenticateController extends Controller
             return '/';
         }
 
+        // Backslashes and control characters are read differently by parse_url and by browsers
+        // (http://evil.com\@app.test/ parses as host app.test, a browser goes to evil.com).
+        if (preg_match('/[\\\\\x00-\x1f\x7f]/', $url) === 1) {
+            return '/';
+        }
+
         $parts = parse_url($url);
-        if ($parts === false) {
+        if ($parts === false || isset($parts['user']) || isset($parts['pass'])) {
             return '/';
         }
 

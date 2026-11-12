@@ -37,6 +37,11 @@ it('only redirects back to safe login urls', function (string $referer, string $
     'same host' => ['https://app.test/login', 'https://app.test/login'],
     'same host other case' => ['https://APP.test/login', 'https://APP.test/login'],
     'same host other port' => ['https://app.test:8443/login', 'https://app.test:8443/login'],
+    'userinfo host trick' => ['http://evil.com\\@app.test/', '/'],
+    'userinfo with user' => ['https://app.test@evil.com/', '/'],
+    'userinfo with password' => ['https://user:pass@app.test/login', '/'],
+    'backslash in path' => ['/login\\x', '/'],
+    'control character' => ["/login\r\nX: y", '/'],
 ]);
 
 it('never leaves the app host for a hostile referer', function (string $referer) {
@@ -72,3 +77,9 @@ it('redirects with an error when the oauth state is invalid', function () {
 
     expect(Auth::check())->toBeFalse();
 });
+
+it('redirects a logged-in user away from both google routes', function (string $route) {
+    $this->actingAs(User::forceCreate(['name' => 'Jan', 'email' => 'jan@statik.be']))
+        ->get(route($route))
+        ->assertRedirect('/');
+})->with(['google.auth.login', 'google.auth.callback']);

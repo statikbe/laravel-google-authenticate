@@ -1,5 +1,7 @@
 <?php
 
+use Statikbe\GoogleAuthenticate\Listeners\GrantSuperAdminRole;
+
 return [
 
     /*
@@ -11,17 +13,17 @@ return [
     |
     */
 
-    'redirect_url' => '/',
+    'redirect_url' => env('GOOGLE_AUTH_REDIRECT_URL', '/'),
 
     /*
     |--------------------------------------------------------------------------
     | register enabled
     |--------------------------------------------------------------------------
     |
-    | Set's a flag to only let manually create users login with their Google Account. Non existing will be given a 403
+    | Set's a flag to only let manually create users login with their Google Account. Non existing users are sent back with the generic login error
     |
     */
-    'register_enabled' => true,
+    'register_enabled' => env('GOOGLE_AUTH_REGISTER', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -70,21 +72,48 @@ return [
    | Configure what domains can log in using google
    |--------------------------------------------------------------------------
    |
-   | If any domain can log in using google you can leave this array empty.
-   | If only certain domains can log in using google
-   |   you can add them to the 'allowed' array.
+   | 'allowed' is a comma separated list in GOOGLE_AUTH_ALLOWED_DOMAINS.
    | When 'allowed' is set, the Google account must also belong to one of those
    |   Workspace domains (the 'hd' claim), so personal accounts are refused.
    | If some domains are not allowed to log in using google
    |   you can add them to the 'disabled' array.
+   | When 'allowed' is empty, new users are refused unless 'allow_any' is true
+   |   (public apps that accept every Google account).
    |
    */
 
     'domains' => [
-        // 'allowed' => ['statik.be', 'shavedmonkey.be'],
-        // 'disabled' => ['google.com'],
-
+        'allowed' => array_filter(array_map('trim', explode(',', (string) env('GOOGLE_AUTH_ALLOWED_DOMAINS', '')))),
+        'disabled' => [],
+        'allow_any' => env('GOOGLE_AUTH_ALLOW_ANY_DOMAIN', false),
     ],
+
+    /*
+   |--------------------------------------------------------------------------
+   | Super admin
+   |--------------------------------------------------------------------------
+   |
+   | 'super_admin_role' is the spatie role used by the default listener and the gate.
+   | 'super_admin_listener' is the listener class for GoogleUserRegistered, for example
+   |   a subclass that overrides assignRole(). Set null or '' for no package listener,
+   |   the gate stays on.
+   | 'super_admin_gate' lets Gate::before give that role every ability.
+   |
+   */
+
+    'super_admin_role' => env('GOOGLE_AUTH_SUPER_ADMIN_ROLE', 'super_admin'),
+    'super_admin_listener' => GrantSuperAdminRole::class,
+    'super_admin_gate' => env('GOOGLE_AUTH_SUPER_ADMIN_GATE', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Throttle
+    |--------------------------------------------------------------------------
+    |
+    | Laravel throttle "maxAttempts,decayMinutes" per IP for both Google routes. Null or empty disables it.
+    |
+    */
+    'throttle' => env('GOOGLE_AUTH_THROTTLE', '10,1'),
 
     /*
    |--------------------------------------------------------------------------
