@@ -12,9 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         $users = $this->usersTable();
-
+        $connection = Schema::getConnection();
+        
         // Fail loudly: returning here would record the migration as run and never add the columns.
-        if (! Schema::hasTable($users)) {
+        if (! $connection->pretending() && ! Schema::hasTable($users)) {
             throw new RuntimeException("google-authenticate: table [{$users}] does not exist. Run this migration after the one that creates it, or point auth.providers.users.model at the right model.");
         }
 
