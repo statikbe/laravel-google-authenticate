@@ -184,7 +184,7 @@ class GrantSuperAdminInTeam
 }
 ```
 
-Alternative when only the role call differs: keep the default listener's domain check and swap just the grant by setting a subclass class in the published config. Put the subclass in `app/Auth/`, not `app/Listeners`: Laravel event discovery registers every class in `app/Listeners` with a typed `handle` method, so a subclass there would run twice (once discovered, once from the config), and `null` would not turn it off:
+Alternative when only the role call differs: keep the default listener's domain check and swap just the grant by setting a subclass class in the published config (`super_admin_listener` only accepts `GrantSuperAdminRole` or a subclass; boot throws otherwise). Put the subclass in `app/Auth/`, not `app/Listeners`: Laravel event discovery registers every class in `app/Listeners` with a typed `handle` method, so a subclass there would run twice (once discovered, once from the config), and `null` would not turn it off:
 
 ```php
 // config/google-authenticate.php

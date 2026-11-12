@@ -94,9 +94,9 @@ return [
    |--------------------------------------------------------------------------
    |
    | 'super_admin_role' is the spatie role used by the default listener and the gate.
-   | 'super_admin_listener' is the listener class for GoogleUserRegistered, for example
-   |   a subclass that overrides assignRole(). Set null or '' for no package listener,
-   |   the gate stays on.
+   | 'super_admin_listener' must be GrantSuperAdminRole or a subclass of it (for example
+   |   one that overrides assignRole()); boot throws otherwise. Set null or '' for no
+   |   package listener, the gate stays on.
    | 'super_admin_gate' lets Gate::before give that role every ability.
    |
    */

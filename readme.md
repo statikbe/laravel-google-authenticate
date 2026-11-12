@@ -66,7 +66,7 @@ php artisan vendor:publish --provider="Statikbe\\GoogleAuthenticate\\GoogleAuthe
 | `domains.disabled` | - | `[]` | Domains that can never log in |
 | `domains.allow_any` | `GOOGLE_AUTH_ALLOW_ANY_DOMAIN` | `false` | `true` lets new users register when `allowed` is empty |
 | `super_admin_role` | `GOOGLE_AUTH_SUPER_ADMIN_ROLE` | `super_admin` | Role used by the default listener and the gate |
-| `super_admin_listener` | - | `GrantSuperAdminRole::class` | Listener class for `GoogleUserRegistered`. `null` or `''` means no package listener. No env var |
+| `super_admin_listener` | - | `GrantSuperAdminRole::class` | Listener class for `GoogleUserRegistered`. Must be `GrantSuperAdminRole` or a subclass. `null` or `''` means no package listener. No env var |
 | `super_admin_gate` | `GOOGLE_AUTH_SUPER_ADMIN_GATE` | `true` | `false` turns off the `Gate::before` |
 | `user_columns` | - | name, email, email_verified_at | Maps Google data to user columns |
 | `middleware` | - | `['web']` | Middleware of the login routes |
@@ -178,7 +178,9 @@ Register it in the published config, not with `Event::listen`:
 'super_admin_listener' => \App\Auth\GrantSuperAdminWithBouncer::class,
 ```
 
-The package checks at boot that the class exists. The spatie checks (`HasRoles`, teams) live in the default `assignRole()`, so your subclass does not inherit them and does not need spatie. The gate calls spatie's `hasRole` (under the user model's guard), so it skips users without `HasRoles`. Set `GOOGLE_AUTH_SUPER_ADMIN_GATE=false` and use the other library's own super admin check.
+Keep the subclass **outside `app/Listeners`** (for example in `app/Auth/`). Laravel auto-discovers listeners in `app/Listeners`, so a subclass there runs twice: once discovered, once registered from config. Setting `super_admin_listener` to `null` would not stop it either.
+
+`super_admin_listener` only accepts `GrantSuperAdminRole` or a subclass. The package checks at boot that the class exists and extends it, and throws otherwise. The spatie checks (`HasRoles`, teams) live in the default `assignRole()`, so your subclass does not inherit them and does not need spatie. The gate calls spatie's `hasRole` (under the user model's guard), so it skips users without `HasRoles`. Set `GOOGLE_AUTH_SUPER_ADMIN_GATE=false` and use the other library's own super admin check.
 
 **Check the domain elsewhere.** The `GoogleAuthenticate` facade gives policies, seeders or Filament's `canAccessPanel()` the same rule the package uses:
 
@@ -191,7 +193,7 @@ GoogleAuthenticate::isAllowedDomain($email, $hostedDomain);   // email domain an
 
 It returns `true` only when `allowed` is not empty, the email domain is not in `disabled`, and the email domain and `hd` (when given) are in `allowed`. The comparison ignores case.
 
-**Replace the default.** Publish the config, set `'super_admin_listener' => null`, and add your own listener:
+**Replace the default.** A listener that does not extend `GrantSuperAdminRole` cannot go in `super_admin_listener`. Publish the config, set `'super_admin_listener' => null`, and register your own listener:
 
 ``` php
 namespace App\Listeners;

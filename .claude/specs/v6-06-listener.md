@@ -15,12 +15,12 @@ Ship the default super admin listener, overridable per role library through one 
 ## Context
 - Plan section 6 (diagram, spatie table, sketch), D3, D4, D5, D11, D1.
 - `GoogleUserRegistered::isFromAllowedDomain()` exists (05). Spatie test tables + `HasRoles` test user exist in `tests/TestCase.php` / `tests/Support` (07).
-- Config: `super_admin_role` (env), `super_admin_listener` (class string, no env, default `GrantSuperAdminRole::class`).
+- Config: `super_admin_role` (env), `super_admin_listener` (class string, no env, default `GrantSuperAdminRole::class`; must be that class or a subclass).
 
 ## Acceptance criteria
 AC1. `handle()` returns without action when `super_admin_role` is empty or `isFromAllowedDomain()` is false; otherwise calls `$this->assignRole($event->user, $roleName)`.
 AC2. Default `assignRole()`: returns without grant when spatie is not installed (`! class_exists(PermissionRegistrar::class)`) or `config('permission.teams')` is true; throws `LogicException` when the user lacks `assignRole` (no `HasRoles`); else `findOrCreate` via `app(PermissionRegistrar::class)->getRoleClass()` with `Guard::getDefaultName($user)` and `assignRole`.
-AC3. Provider registers `Event::listen(GoogleUserRegistered::class, $listener)` only when `super_admin_listener` and `super_admin_role` are both non-empty. A configured class that does not exist throws at boot with a clear message (test).
+AC3. Provider registers `Event::listen(GoogleUserRegistered::class, $listener)` only when `super_admin_listener` and `super_admin_role` are both non-empty. A configured class that does not exist, or that does not extend `GrantSuperAdminRole`, throws at boot with a clear message (tests).
 AC4. A subclass set as `super_admin_listener` that overrides only `assignRole()` runs instead of the default, and still skips users outside `allowed` (test).
 AC5. Tests (real spatie tables): grant with default and custom role name; role created when missing, existing reused, custom Role model respected; no grant without `allowed`, on `hd` mismatch, on a linked row, when `super_admin_listener` is null; teams on → no grant and login succeeds; missing `HasRoles` → new user rolled back and login fails.
 AC6. **Absence:** listener does not implement `ShouldQueue`.
@@ -51,6 +51,7 @@ Gate (07), domain rule (05), docs (08). Spatie-not-installed path is covered by 
 | Date | Change | Why | Approved by |
 |---|---|---|---|
 | 2026-11-12 | AC8 added: guard-scoped gate check | automated security review of v6-07; gate stays default-on (user decision D8) | orchestrator ruling |
+| 2026-11-12 | `super_admin_listener` must extend `GrantSuperAdminRole`, boot throws otherwise (AC3 updated) | keeps the domain check in the package; a fully custom listener uses `null` + own registration | Kristof |
 
 ## Rulings
 - "Spatie missing" via overridable `permissionsAvailable()` (listener and provider); real `class_exists` branch not exercised with spatie in require-dev — cost if wrong: an untested branch.

@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use Spatie\Permission\Guard;
 use Statikbe\GoogleAuthenticate\Events\GoogleUserRegistered;
+use Statikbe\GoogleAuthenticate\Listeners\GrantSuperAdminRole;
 
 class GoogleAuthenticateServiceProvider extends ServiceProvider
 {
@@ -81,7 +82,7 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
     }
 
     /**
-     * Fails loudly on a missing class, so a typo in the config does not silently grant nothing.
+     * Fails loudly on a missing class or one that does not extend GrantSuperAdminRole, so a typo in the config does not silently grant nothing.
      */
     protected function registerSuperAdminListener(): void
     {
@@ -93,6 +94,10 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
 
         if (! class_exists($listener)) {
             throw new InvalidArgumentException("google-authenticate.super_admin_listener: class [{$listener}] does not exist. Set a listener class, or null for none.");
+        }
+
+        if (! is_a($listener, GrantSuperAdminRole::class, true)) {
+            throw new InvalidArgumentException("google-authenticate.super_admin_listener: [{$listener}] must extend ".GrantSuperAdminRole::class.'. For a fully custom listener, set null and register your own.');
         }
 
         Event::listen(GoogleUserRegistered::class, $listener);

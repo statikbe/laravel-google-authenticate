@@ -169,6 +169,12 @@ it('fails loudly at boot when the configured listener class does not exist', fun
     expect(fn () => registerListener())->toThrow(InvalidArgumentException::class, 'App\Listeners\Typo');
 });
 
+it('fails loudly at boot when the configured listener does not extend GrantSuperAdminRole', function () {
+    config(['google-authenticate.super_admin_listener' => stdClass::class]);
+
+    expect(fn () => registerListener())->toThrow(InvalidArgumentException::class, 'must extend');
+});
+
 it('runs a subclass that overrides only assignRole, and still skips users outside allowed', function () {
     listenerAllowed();
     config(['google-authenticate.super_admin_listener' => RenamedListener::class]);

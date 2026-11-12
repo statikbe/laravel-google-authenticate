@@ -9,6 +9,7 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 - The migration loads automatically, skips columns that already exist, makes `users.password` nullable when needed, and its `down()` does nothing
 - The migration uses the table of the configured user model, fails with a clear message when that table is missing, keeps a custom `password` column length, and adds a unique index on `provider_id` unless one exists or duplicates are present (then it skips)
 - Default listener `Statikbe\GoogleAuthenticate\Listeners\GrantSuperAdminRole`: grants the `super_admin` role to new users whose email domain and `hd` are both in `domains.allowed`. The role-library code sits in `protected assignRole()`, so a subclass can swap spatie for another library. Set the class in `super_admin_listener`, or `null` to turn it off
+- Boot check: `super_admin_listener` must be `GrantSuperAdminRole` or a subclass, otherwise an `InvalidArgumentException` is thrown. A fully custom listener uses `null` and registers itself
 - `Gate::before` for the super admin role, checked under the user model's own guard, with `GOOGLE_AUTH_SUPER_ADMIN_GATE` to turn it off
 - `GoogleAuthenticate` facade with `isAllowedDomain(string $email, ?string $hostedDomain = null)`
 - `GoogleUserRegistered::isFromAllowedDomain()`
