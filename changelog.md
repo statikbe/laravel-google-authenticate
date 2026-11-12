@@ -4,6 +4,9 @@ All notable changes to `GoogleAuthenticator` will be documented in this file.
 
 ## Version 6.0.2
 
+### Changed
+- The package migration file is undated (`add_google_provider_to_users_table.php`). It still loads automatically, and `php artisan vendor:publish --tag=google-migrations` names the copy with the current date. Apps that already ran the 6.0 migration see it once more under the new name: it is idempotent and changes nothing
+
 ### Fixed
 - The migration's duplicate `provider_id` check selects only `provider_id`, so it no longer fails on MySQL with `only_full_group_by` (SQLSTATE 1055)
 

@@ -19,7 +19,6 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
     {
         // loaders
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'google-authenticate');
@@ -117,8 +116,9 @@ class GoogleAuthenticateServiceProvider extends ServiceProvider
             __DIR__.'/../resources/lang' => $langPath,
         ], 'google-lang');
 
+        // optional: the published copy gets today's date
         $this->publishes([
-            __DIR__.'/../database/migrations/2024_01_01_000000_add_google_provider_to_users_table.php' => database_path('migrations/'.date('Y_m_d_His').'_add_google_provider_to_users_table.php'),
+            __DIR__.'/../database/migrations/add_google_provider_to_users_table.php' => database_path('migrations/'.date('Y_m_d_His').'_add_google_provider_to_users_table.php'),
         ], 'google-migrations');
 
         // publishes config file

@@ -20,7 +20,7 @@ Make install three steps (require, env vars, migrate): `services.google` default
 
 ## Acceptance criteria
 AC1. With no `services.google` set in the app, `config('services.google')` equals `client_id` = `env('GOOGLE_CLIENT_ID')`, `client_secret` = `env('GOOGLE_CLIENT_SECRET')`, `redirect` = `/login/google/callback`, read from a package file `config/google-services.php` merged in `register()`. An app that sets `services.google` keeps its own values, key by key (test both).
-AC2. The migration is an anonymous class at `database/migrations/2024_01_01_000000_add_google_provider_to_users_table.php`, loaded with `loadMigrationsFrom`. It adds `provider` and `provider_id` only when missing (`Schema::hasColumn`), so running it on a table that has them is a no-op (test: run twice / on pre-existing columns). Still publishable under tag `google-migrations`.
+AC2. The migration is an anonymous class at `database/migrations/add_google_provider_to_users_table.php` (undated), loaded with `loadMigrationsFrom` and published with the current date under tag `google-migrations`. It adds `provider` and `provider_id` only when missing (`Schema::hasColumn`), so running it on a table that has them is a no-op (test: run twice / on pre-existing columns).
 AC2b. The migration makes `users.password` nullable when it exists and is not nullable yet (`Schema::getColumns` + `->nullable()->change()`); no-op otherwise. `down()` is a no-op: it never drops `provider`/`provider_id` (they may predate this migration) and never reverts `password`.
 AC3. `GoogleAuthService` is bound as a singleton (test: two resolves return the same instance).
 AC4. `tests/TestCase.php` drops the `App\Models\User` alias if 02 is merged and the suite stays green; otherwise leave it and note.
@@ -52,6 +52,7 @@ Gate, listener registration (07, 06); D9 guard (05); config key set (01 owns it)
 | Date | Change | Why | Approved by |
 |---|---|---|---|
 | 2026-11-12 | AC2b added: password nullable; `down()` no-op | round-1 review: fresh apps have NOT NULL password (Google users have none); rollback would wipe pre-existing provider columns | orchestrator ruling |
+| 2026-11-12 | Migration file undated (add_google_provider_to_users_table.php), still auto-loaded; publishing names the copy with the current date | user wants published copy dated today; migration is hard required so stays auto-loaded | Kristof |
 
 ## Rulings
 - AC4 (TestCase alias) moved to v6-07, which owns TestCase in wave 2.
