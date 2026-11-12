@@ -16,17 +16,20 @@
     "homepage": "https://github.com/statikbe/laravel-google-authenticate",
     "keywords": ["Laravel", "google", "authenticate", "socialite"],
     "require": {
-        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/routing": "^10.0|^11.0|^12.0|^13.0",
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "illuminate/routing": "^11.0|^12.0|^13.0",
         "laravel/socialite": "^5.18"
     },
     "require-dev": {
-        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
         "pestphp/pest": "^2.34|^3.0|^4.0",
-        "laravel/pint": "^1.32"
+        "laravel/pint": "^1.32",
+        "spatie/laravel-permission": "^6.0|^7.0",
+        "larastan/larastan": "^3.0"
     },
     "suggest": {
-        "doctrine/dbal": "If you are using the provided migration you will need doctrine/dbal. You won't need this in Laravel versions >= 11"
+        "spatie/laravel-permission": "Needed by the default GrantSuperAdminRole listener and the super admin gate (^6.0|^7.0)"
     },
     "autoload": {
         "psr-4": {
@@ -41,7 +44,8 @@
     "scripts": {
         "test": "vendor/bin/pest",
         "format": "vendor/bin/pint",
-        "lint": "vendor/bin/pint --test"
+        "lint": "vendor/bin/pint --test",
+        "analyse": "vendor/bin/phpstan analyse --no-progress --memory-limit=1G"
     },
     "config": {
         "allow-plugins": {
@@ -52,7 +56,10 @@
         "laravel": {
             "providers": [
                 "Statikbe\\GoogleAuthenticate\\GoogleAuthenticateServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "GoogleAuthenticate": "Statikbe\\GoogleAuthenticate\\Facades\\GoogleAuthenticate"
+            }
         }
     }
 }

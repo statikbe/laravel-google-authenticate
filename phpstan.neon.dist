@@ -1,0 +1,13 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - src
+        - config
+        - routes
+        - database
+    # Larastan resolves config_path() against the testbench skeleton, not this package.
+    configDirectories:
+        - %currentWorkingDirectory%/config
